@@ -11,29 +11,40 @@ import { initDB } from "./models/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import boardRoutes from "./routes/boardRoutes.js";
 
+import helmet from "helmet";
+
 const app = express();
 const PORT = 3000;
 
+app.use(helmet()); // Security headers
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
-    origin: /http:\/\/localhost:\d+$/,
-    credentials: true
+    origin: ["http://localhost:5173"], // Restrict to known frontend
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
 }));
+
+// Rate Limiting
+import rateLimit from 'express-rate-limit';
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    limit: 100, // Limit each IP to 100 requests per windowMs
+    standardHeaders: 'draft-7',
+    legacyHeaders: true,
+});
+app.use(limiter);
+
+app.use(express.json({ limit: '10kb' })); // Body limit
 
 // Initialize DB
 initDB();
 
 // Request logging middleware
 app.use((req, res, next) => {
-    console.log(`REQ: ${req.method} ${req.url} ${req.body && Object.keys(req.body).length ? JSON.stringify(req.body) : ""}`);
-
-    // Intercept response to log status
-    const originalJson = res.json;
-    res.json = function (body) {
-        console.log(`RES: ${res.statusCode} ${JSON.stringify(body).substring(0, 100)}`);
-        originalJson.apply(res, arguments);
-    };
+    // SECURITY: Do NOT log req.body to prevent sensitive data leaks (passwords, tokens)
+    console.log(`REQ: ${req.method} ${req.url}`);
     next();
 });
 
