@@ -5,6 +5,9 @@ import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from 'url';
 
+// Try loading .env from current directory (Production/Standard)
+dotenv.config();
+// Also try loading from root (Local Dev compatibility)
 dotenv.config({ path: path.resolve(fileURLToPath(import.meta.url), '../../.env') });
 
 import { initDB } from "./models/db.js";
