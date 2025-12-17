@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.PROD ? "/api" : "http://localhost:3000";
+const API_URL = window.location.hostname === 'localhost' ? "http://localhost:3000" : "/api";
 
 const fetchWithAuth = async (url, options = {}) => {
     options.credentials = "include";
