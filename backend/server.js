@@ -53,6 +53,7 @@ app.use((req, res, next) => {
 
 /* ================== ROUTES ================== */
 
+app.use("/api/auth", authRoutes); // Handle requests where Nginx didn't strip /api
 app.use("/auth", authRoutes);
 app.use("/", boardRoutes);
 
