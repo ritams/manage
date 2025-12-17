@@ -55,6 +55,7 @@ app.use((req, res, next) => {
 
 app.use("/api/auth", authRoutes); // Handle requests where Nginx didn't strip /api
 app.use("/auth", authRoutes);
+app.use("/api", boardRoutes); // Handle /api/board, /api/lists etc.
 app.use("/", boardRoutes);
 
 app.listen(PORT, () =>
