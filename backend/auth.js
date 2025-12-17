@@ -3,11 +3,19 @@ import jwt from "jsonwebtoken";
 
 export async function verifyGoogleToken(token) {
     const GOOGLE_CLIENT_ID = process.env.VITE_GOOGLE_CLIENT_ID;
+    console.log("Verifying token against Client ID:", GOOGLE_CLIENT_ID);
+
     const res = await fetch(
         `https://oauth2.googleapis.com/tokeninfo?id_token=${token}`
     );
     const data = await res.json();
-    if (data.aud !== GOOGLE_CLIENT_ID) throw new Error("Invalid token");
+    console.log("Google Token Info Response:", JSON.stringify(data).substring(0, 100) + "..."); // Log first 100 chars
+
+    if (data.error) throw new Error("Google Error: " + data.error_description);
+    if (data.aud !== GOOGLE_CLIENT_ID) {
+        console.error(`Token aud (${data.aud}) does not match env (${GOOGLE_CLIENT_ID})`);
+        throw new Error("Invalid token audience");
+    }
     return data;
 }
 

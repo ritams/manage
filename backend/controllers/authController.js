@@ -22,9 +22,12 @@ export const googleLogin = async (req, res) => {
 
         res.json({ ok: true, user: { name: user.name, email: user.email } });
     } catch (e) {
-        console.error(e);
-        res.status(401).json({ error: "Auth failed" });
+        console.error("LOGIN ERROR DETAILED:", e);
+        console.error("Message:", e.message);
+        console.error("Stack:", e.stack);
+        res.status(401).json({ error: "Auth failed", details: e.message });
     }
+
 };
 
 export const logout = (req, res) => {
