@@ -20,7 +20,7 @@ app.use(helmet()); // Security headers
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
-    origin: ["http://localhost:5173"], // Restrict to known frontend
+    origin: ["http://localhost:5173", "https://manage.ritampal.com"], // Restrict to known frontend
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"]
