@@ -38,9 +38,14 @@ export const createList = async (req, res) => {
         if (title.length > 255) {
             return res.status(400).json({ error: "Title too long (max 255 chars)" });
         }
+
+        // Get max position for lists for this user
+        const maxPosResult = await db.query("SELECT MAX(position) as maxPos FROM lists WHERE user_id=?", [req.user.id]);
+        const nextPos = (maxPosResult[0].maxPos !== null) ? maxPosResult[0].maxPos + 1 : 0;
+
         const result = await db.run(
             "INSERT INTO lists (user_id, title, position) VALUES (?, ?, ?)",
-            [req.user.id, req.body.title, Date.now()]
+            [req.user.id, title, nextPos]
         );
         res.json({ id: result.id });
     } catch (err) {
@@ -114,9 +119,13 @@ export const createCard = async (req, res) => {
         const list = await db.query("SELECT id FROM lists WHERE id=? AND user_id=?", [listId, req.user.id]);
         if (!list || list.length === 0) return res.status(404).json({ error: "List not found or unauthorized" });
 
+        // Get max position for this list to ensure sequential ordering
+        const maxPosResult = await db.query("SELECT MAX(position) as maxPos FROM cards WHERE list_id=?", [listId]);
+        const nextPos = (maxPosResult[0].maxPos !== null) ? maxPosResult[0].maxPos + 1 : 0;
+
         const result = await db.run(
             "INSERT INTO cards (list_id, text, position) VALUES (?, ?, ?)",
-            [listId, text, Date.now()]
+            [listId, text, nextPos]
         );
         res.json({ id: result.id });
     } catch (err) {
@@ -170,13 +179,17 @@ export const moveCard = async (req, res) => {
         const targetList = await db.query("SELECT id FROM lists WHERE id=? AND user_id=?", [listId, req.user.id]);
         if (!targetList || targetList.length === 0) return res.status(404).json({ error: "Target list not found or unauthorized" });
 
-        // Verify card ownership and move
+        // Get max position for the target list
+        const maxPosResult = await db.query("SELECT MAX(position) as maxPos FROM cards WHERE list_id=?", [listId]);
+        const nextPos = (maxPosResult[0].maxPos !== null) ? maxPosResult[0].maxPos + 1 : 0;
+
+        // Verify card ownership and move with updated position
         const result = await db.run(
-            `UPDATE cards SET list_id=? 
+            `UPDATE cards SET list_id=?, position=? 
              WHERE id=? AND EXISTS (
                 SELECT 1 FROM lists WHERE lists.id = cards.list_id AND lists.user_id=?
              )`,
-            [listId, cardId, req.user.id]
+            [listId, nextPos, cardId, req.user.id]
         );
 
         if (result.changes === 0) return res.status(404).json({ error: "Card not found or unauthorized" });
