@@ -40,6 +40,7 @@ export default function Board({ user, onLogout }) {
         activeCard,
         handleDragStart,
         handleDragEnd,
+        handleDragOver,
         formatListId
     } = useBoardDrag(lists, setLists, reorderLists, moveCard, reorderCards);
 
@@ -76,6 +77,7 @@ export default function Board({ user, onLogout }) {
                 sensors={sensors}
                 collisionDetection={closestCorners}
                 onDragStart={handleDragStart}
+                onDragOver={handleDragOver}
                 onDragEnd={handleDragEnd}
                 measuring={{
                     droppable: {
