@@ -21,7 +21,7 @@ export const googleLogin = async (req, res) => {
             maxAge: 7 * 24 * 60 * 60 * 1000 // 1 week
         });
 
-        res.json({ ok: true, user: { name: user.name, email: user.email } });
+        res.json({ ok: true, user: { name: user.name, email: user.email, picture: user.picture } });
     } catch (e) {
         console.error("LOGIN ERROR DETAILED:", e);
         console.error("Message:", e.message);
