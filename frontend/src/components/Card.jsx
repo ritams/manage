@@ -15,7 +15,7 @@ export default function Card({ card, onDelete, onUpdate }) {
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
-        opacity: isDragging ? 0.5 : 1,
+        opacity: isDragging ? 0.3 : 1,
     };
 
     const [isEditing, setIsEditing] = useState(false);
@@ -40,24 +40,24 @@ export default function Card({ card, onDelete, onUpdate }) {
 
     if (isEditing) {
         return (
-            <div ref={setNodeRef} style={style} className="relative z-10" {...attributes} {...listeners}>
-                <div className="bg-card border border-primary/50 shadow-sm rounded-xl p-2 animate-in fade-in zoom-in-95 duration-100">
+            <div ref={setNodeRef} style={style} className="relative z-20 group/card">
+                <div className="bg-card/80 backdrop-blur-xl border-2 border-primary/40 shadow-2xl rounded-[1.5rem] p-3 animate-in fade-in zoom-in-95 duration-200">
                     <Input
                         value={text}
                         onChange={(e) => setText(e.target.value)}
                         autoFocus
                         onBlur={handleSave}
                         onKeyDown={handleKeyDown}
-                        className="h-8 text-sm bg-background border-border/50 mb-2"
+                        className="h-10 text-sm bg-background border-border/50 mb-3 rounded-xl font-medium px-3"
                     />
-                    <div className="flex justify-end gap-1">
+                    <div className="flex justify-end gap-2">
                         <Button
                             size="sm"
-                            className="h-6 px-2 text-xs bg-primary hover:bg-primary/90"
-                            onMouseDown={(e) => e.preventDefault()} // Prevent blur
+                            className="h-8 px-4 text-xs bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-lg shadow-lg shadow-primary/20"
+                            onMouseDown={(e) => e.preventDefault()}
                             onClick={handleSave}
                         >
-                            Save
+                            Update Task
                         </Button>
                     </div>
                 </div>
@@ -67,28 +67,31 @@ export default function Card({ card, onDelete, onUpdate }) {
 
     return (
         <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="group/card relative">
-            <ShadcnCard className="bg-card border-border/60 shadow-sm hover:shadow-md hover:border-primary/30 transition-all duration-200 cursor-grab active:cursor-grabbing group-hover/card:translate-y-[-1px]">
-                <CardContent className="p-3 text-sm font-medium text-foreground/90 leading-relaxed break-words relative pr-8">
-                    {card.text}
+            <ShadcnCard className="bg-card/60 backdrop-blur-md border border-border/40 shadow-sm hover:shadow-xl hover:shadow-primary/5 hover:border-primary/20 hover:-translate-y-1 transition-all duration-300 cursor-grab active:cursor-grabbing rounded-2xl overflow-hidden group">
+                <CardContent className="p-4 text-sm font-semibold text-foreground/80 leading-relaxed break-words relative pr-10">
+                    <div className="flex items-start gap-2">
+                        <div className="w-1 h-5 rounded-full bg-primary/20 mt-0.5 group-hover:bg-primary transition-colors" />
+                        <span className="flex-1">{card.text}</span>
+                    </div>
 
-                    <div className="absolute top-1 right-1 opacity-0 group-hover/card:opacity-100 transition-opacity flex flex-col gap-0.5 bg-card/80 backdrop-blur-sm rounded-md p-0.5 border border-border/50 shadow-sm">
+                    <div className="absolute top-2 right-2 opacity-0 group-hover/card:opacity-100 transition-all transform translate-x-2 group-hover/card:translate-x-0 flex flex-col gap-1 bg-card/40 backdrop-blur-md rounded-xl p-1 border border-border/40 shadow-xl">
                         <Button
                             variant="ghost"
                             size="icon"
-                            className="h-5 w-5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-sm"
-                            onPointerDown={(e) => e.stopPropagation()} // Prevent drag start
+                            className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-all"
+                            onPointerDown={(e) => e.stopPropagation()}
                             onClick={() => setIsEditing(true)}
                         >
-                            <Pencil className="h-3 w-3" />
+                            <Pencil className="h-3.5 w-3.5" />
                         </Button>
                         <Button
                             variant="ghost"
                             size="icon"
-                            className="h-5 w-5 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-sm"
-                            onPointerDown={(e) => e.stopPropagation()} // Prevent drag start
+                            className="h-7 w-7 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition-all"
+                            onPointerDown={(e) => e.stopPropagation()}
                             onClick={(e) => { e.stopPropagation(); onDelete(); }}
                         >
-                            <Trash2 className="h-3 w-3" />
+                            <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                     </div>
                 </CardContent>
