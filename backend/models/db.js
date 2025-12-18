@@ -56,21 +56,14 @@ export const run = (sql, params = []) => {
 
 // Transaction helper
 export const transaction = async (callback) => {
-    return new Promise((resolve, reject) => {
-        db.serialize(async () => {
-            db.run("BEGIN TRANSACTION");
-            try {
-                await callback(db);
-                db.run("COMMIT", (err) => {
-                    if (err) reject(err);
-                    else resolve();
-                });
-            } catch (err) {
-                db.run("ROLLBACK");
-                reject(err);
-            }
-        });
-    });
+    await run("BEGIN TRANSACTION");
+    try {
+        await callback(db);
+        await run("COMMIT");
+    } catch (err) {
+        await run("ROLLBACK");
+        throw err;
+    }
 };
 
 export default { query, run, transaction, initDB };

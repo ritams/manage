@@ -58,21 +58,28 @@ export function useBoardDrag(lists, setLists, reorderLists, moveCard, reorderCar
         const activeCardId = parseId(activeIdStr);
         const overIdParsed = parseId(overIdStr);
 
-        const activeCard = active.data.current.card;
-        const sourceList = lists.find(l => l.cards.find(c => c.id === activeCardId));
+        setLists((prev) => {
+            const activeCard = active.data.current.card;
+            const sourceList = prev.find(l => l.cards.find(c => c.id === activeCardId));
 
-        let destList = null;
-        if (over.data.current?.type === "List") {
-            destList = lists.find(l => l.id === overIdParsed);
-        } else if (over.data.current?.type === "Card") {
-            destList = lists.find(l => l.cards.find(c => c.id === overIdParsed));
-        }
+            let destList = null;
+            if (over.data.current?.type === "List") {
+                destList = prev.find(l => l.id === overIdParsed);
+            } else if (over.data.current?.type === "Card") {
+                destList = prev.find(l => l.cards.find(c => c.id === overIdParsed));
+            }
 
-        if (sourceList && destList && sourceList.id !== destList.id) {
-            setLists((prev) => {
-                const overIndex = over.data.current?.type === "Card"
-                    ? destList.cards.findIndex(c => c.id === overIdParsed)
-                    : destList.cards.length;
+            if (!sourceList || !destList) return prev;
+
+            if (sourceList.id !== destList.id) {
+                // Cross-list move (Optimistic)
+                let overIndex;
+                if (over.data.current?.type === "Card") {
+                    overIndex = destList.cards.findIndex(c => c.id === overIdParsed);
+                } else {
+                    // Over the List container -> append to end
+                    overIndex = destList.cards.length;
+                }
 
                 return prev.map(l => {
                     if (l.id === sourceList.id) {
@@ -80,6 +87,7 @@ export function useBoardDrag(lists, setLists, reorderLists, moveCard, reorderCar
                     }
                     if (l.id === destList.id) {
                         const newCards = [...l.cards];
+                        // If card isn't already in this list, add it
                         if (!newCards.find(c => c.id === activeCardId)) {
                             newCards.splice(overIndex, 0, { ...activeCard, list_id: destList.id });
                         }
@@ -87,8 +95,21 @@ export function useBoardDrag(lists, setLists, reorderLists, moveCard, reorderCar
                     }
                     return l;
                 });
-            });
-        }
+            } else {
+                // Same-list reorder (Dynamic shifting)
+                const oldIndex = sourceList.cards.findIndex(c => c.id === activeCardId);
+                const newIndex = destList.cards.findIndex(c => c.id === overIdParsed);
+
+                if (oldIndex !== newIndex && oldIndex !== -1 && newIndex !== -1) {
+                    const newCards = arrayMove(sourceList.cards, oldIndex, newIndex);
+                    return prev.map(l => {
+                        if (l.id === sourceList.id) return { ...l, cards: newCards };
+                        return l;
+                    });
+                }
+            }
+            return prev;
+        });
     };
 
     const handleDragEnd = (event) => {
@@ -123,21 +144,21 @@ export function useBoardDrag(lists, setLists, reorderLists, moveCard, reorderCar
             return;
         }
 
-        // Card Dragging - Sync with Backend
+        // Card Dragging Finish - Final Backend Sync
         const activeCardId = parseId(activeIdStr);
         const currentList = lists.find(l => l.cards.find(c => c.id === activeCardId));
 
         if (currentList) {
-            // Find the original list to see if it moved
-            // Actually, we can just always moveCard then reorderCards
-            // But to be efficient, we check if list_id changed.
-            // Since activeCard stores its INITIAL list_id, we compare.
-            if (active.data.current.card.list_id !== currentList.id) {
-                moveCard(activeCardId, currentList.id, lists).then(() => {
-                    reorderCards(lists, currentList.cards.map(c => c.id));
-                });
+            // Check if it moved lists (activeCard stores INITIAL data)
+            const cardIds = currentList.cards.map(c => c.id);
+            if (activeCard.list_id !== currentList.id) {
+                // MOVE then REORDER to ensure spot persistence
+                moveCard(activeCardId, currentList.id, lists)
+                    .then(() => reorderCards(lists, cardIds))
+                    .catch(() => { /* error handled in useBoardData */ });
             } else {
-                reorderCards(lists, currentList.cards.map(c => c.id));
+                // Just same-list reorder
+                reorderCards(lists, cardIds);
             }
         }
     };

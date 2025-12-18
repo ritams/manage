@@ -39,13 +39,10 @@ export const createList = async (req, res) => {
             return res.status(400).json({ error: "Title too long (max 255 chars)" });
         }
 
-        // Get max position for lists for this user
-        const maxPosResult = await db.query("SELECT MAX(position) as maxPos FROM lists WHERE user_id=?", [req.user.id]);
-        const nextPos = (maxPosResult[0].maxPos !== null) ? maxPosResult[0].maxPos + 1 : 0;
 
         const result = await db.run(
-            "INSERT INTO lists (user_id, title, position) VALUES (?, ?, ?)",
-            [req.user.id, title, nextPos]
+            "INSERT INTO lists (user_id, title, position) VALUES (?, ?, (SELECT IFNULL(MAX(position), -1) + 1 FROM lists WHERE user_id=?))",
+            [req.user.id, title, req.user.id]
         );
         res.json({ id: result.id });
     } catch (err) {
@@ -119,13 +116,10 @@ export const createCard = async (req, res) => {
         const list = await db.query("SELECT id FROM lists WHERE id=? AND user_id=?", [listId, req.user.id]);
         if (!list || list.length === 0) return res.status(404).json({ error: "List not found or unauthorized" });
 
-        // Get max position for this list to ensure sequential ordering
-        const maxPosResult = await db.query("SELECT MAX(position) as maxPos FROM cards WHERE list_id=?", [listId]);
-        const nextPos = (maxPosResult[0].maxPos !== null) ? maxPosResult[0].maxPos + 1 : 0;
 
         const result = await db.run(
-            "INSERT INTO cards (list_id, text, position) VALUES (?, ?, ?)",
-            [listId, text, nextPos]
+            "INSERT INTO cards (list_id, text, position) VALUES (?, ?, (SELECT IFNULL(MAX(position), -1) + 1 FROM cards WHERE list_id=?))",
+            [listId, text, listId]
         );
         res.json({ id: result.id });
     } catch (err) {
