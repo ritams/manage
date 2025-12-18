@@ -22,7 +22,7 @@ export async function verifyGoogleToken(token) {
 export function authMiddleware(req, res, next) {
     const JWT_SECRET = process.env.JWT_SECRET;
     try {
-        const token = req.cookies.session;
+        const token = req.signedCookies.session;
         if (!token) throw new Error("No token");
         const payload = jwt.verify(token, JWT_SECRET);
         req.user = payload;

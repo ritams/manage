@@ -21,7 +21,7 @@ const PORT = 3000;
 
 app.use(helmet()); // Security headers
 app.use(express.json());
-app.use(cookieParser());
+app.use(cookieParser(process.env.JWT_SECRET));
 app.use(cors({
     origin: ["http://localhost:5173", "https://manage.ritampal.com"], // Restrict to known frontend
     credentials: true,

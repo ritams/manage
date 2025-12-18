@@ -254,6 +254,9 @@ export const createTag = async (req, res) => {
         if (!name || typeof name !== 'string' || name.trim().length === 0) {
             return res.status(400).json({ error: "Invalid name" });
         }
+        if (color && !/^#[0-9A-Fa-f]{6}$/.test(color)) {
+            return res.status(400).json({ error: "Invalid color format (must be hex code, e.g. #3b82f6)" });
+        }
         const result = await db.run(
             "INSERT INTO tags (user_id, name, color) VALUES (?, ?, ?)",
             [req.user.id, name, color || "#3b82f6"]
@@ -267,6 +270,9 @@ export const createTag = async (req, res) => {
 export const updateTag = async (req, res) => {
     const { name, color } = req.body;
     try {
+        if (color && !/^#[0-9A-Fa-f]{6}$/.test(color)) {
+            return res.status(400).json({ error: "Invalid color format (must be hex code, e.g. #3b82f6)" });
+        }
         const result = await db.run(
             "UPDATE tags SET name=?, color=? WHERE id=? AND user_id=?",
             [name, color, req.params.id, req.user.id]

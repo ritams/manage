@@ -17,6 +17,7 @@ export const googleLogin = async (req, res) => {
             httpOnly: true,
             sameSite: 'lax',
             secure: process.env.NODE_ENV === 'production', // true in production
+            signed: true,
             maxAge: 7 * 24 * 60 * 60 * 1000 // 1 week
         });
 
