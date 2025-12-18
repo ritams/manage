@@ -24,6 +24,11 @@ import { useBoardDrag } from "../hooks/useBoardDrag";
 
 export default function Board({ user, onLogout }) {
     const {
+        boards,
+        activeBoard,
+        switchBoard,
+        createBoard,
+        updateBoard,
         lists,
         setLists, // Needed for drag hook updates
         createList,
@@ -80,7 +85,15 @@ export default function Board({ user, onLogout }) {
             <div className="absolute top-0 right-0 -mr-40 -mt-40 w-96 h-96 bg-primary/10 rounded-full blur-[100px] -z-10 animate-pulse"></div>
             <div className="absolute bottom-0 left-0 -ml-40 -mb-40 w-80 h-80 bg-accent/20 rounded-full blur-[100px] -z-10 animate-pulse delay-700"></div>
 
-            <BoardHeader user={user} onLogout={onLogout} />
+            <BoardHeader
+                user={user}
+                onLogout={onLogout}
+                boards={boards}
+                activeBoard={activeBoard}
+                onSwitchBoard={switchBoard}
+                onCreateBoard={createBoard}
+                onUpdateBoard={updateBoard}
+            />
 
             <DndContext
                 sensors={sensors}

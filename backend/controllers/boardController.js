@@ -1,10 +1,80 @@
 import db from '../models/db.js';
 
-export const getBoard = async (req, res) => {
+export const getBoards = async (req, res) => {
     try {
+        const boards = await db.query("SELECT * FROM boards WHERE user_id=? ORDER BY created_at", [req.user.id]);
+        res.json(boards);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+export const createBoard = async (req, res) => {
+    try {
+        const { name } = req.body;
+        if (!name || typeof name !== 'string' || name.trim().length === 0) {
+            return res.status(400).json({ error: "Invalid name" });
+        }
+        const result = await db.run(
+            "INSERT INTO boards (user_id, name) VALUES (?, ?)",
+            [req.user.id, name]
+        );
+        res.json({ id: result.id, name });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+export const updateBoard = async (req, res) => {
+    try {
+        const { name } = req.body;
+        if (!name || typeof name !== 'string' || name.trim().length === 0) {
+            return res.status(400).json({ error: "Invalid name" });
+        }
+        const result = await db.run(
+            "UPDATE boards SET name=? WHERE id=? AND user_id=?",
+            [name, req.params.id, req.user.id]
+        );
+        if (result.changes === 0) return res.status(404).json({ error: "Board not found or unauthorized" });
+        res.json({ ok: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+export const deleteBoard = async (req, res) => {
+    try {
+        const board = await db.query("SELECT id FROM boards WHERE id=? AND user_id=?", [req.params.id, req.user.id]);
+        if (!board || board.length === 0) return res.status(404).json({ error: "Board not found or unauthorized" });
+
+        await db.transaction(async () => {
+            // Cascade delete lists and cards
+            // First get all lists in this board to delete their cards
+            const lists = await db.query("SELECT id FROM lists WHERE board_id=?", [req.params.id]);
+            for (const list of lists) {
+                await db.run("DELETE FROM cards WHERE list_id=?", [list.id]);
+            }
+            await db.run("DELETE FROM lists WHERE board_id=?", [req.params.id]);
+            await db.run("DELETE FROM boards WHERE id=?", [req.params.id]);
+        });
+        res.json({ ok: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+export const getLists = async (req, res) => {
+    try {
+        const { boardId } = req.query;
+        if (!boardId) return res.status(400).json({ error: "boardId required" });
+
+        // Verify board ownership
+        const board = await db.query("SELECT id FROM boards WHERE id=? AND user_id=?", [boardId, req.user.id]);
+        if (!board || board.length === 0) return res.status(404).json({ error: "Board not found or unauthorized" });
+
         const lists = await db.query(
-            "SELECT * FROM lists WHERE user_id=? ORDER BY position",
-            [req.user.id]
+            "SELECT * FROM lists WHERE user_id=? AND board_id=? ORDER BY position",
+            [req.user.id, boardId]
         );
 
         if (!lists || lists.length === 0) return res.json([]);
@@ -53,18 +123,25 @@ export const getBoard = async (req, res) => {
 
 export const createList = async (req, res) => {
     try {
-        const { title } = req.body;
+        const { title, boardId } = req.body;
         if (!title || typeof title !== 'string' || title.trim().length === 0) {
             return res.status(400).json({ error: "Invalid title" });
+        }
+        if (!boardId) {
+            return res.status(400).json({ error: "boardId required" });
         }
         if (title.length > 255) {
             return res.status(400).json({ error: "Title too long (max 255 chars)" });
         }
 
+        // Verify board ownership
+        const board = await db.query("SELECT id FROM boards WHERE id=? AND user_id=?", [boardId, req.user.id]);
+        if (!board || board.length === 0) return res.status(404).json({ error: "Board not found or unauthorized" });
+
 
         const result = await db.run(
-            "INSERT INTO lists (user_id, title, position) VALUES (?, ?, (SELECT IFNULL(MAX(position), -1) + 1 FROM lists WHERE user_id=?))",
-            [req.user.id, title, req.user.id]
+            "INSERT INTO lists (user_id, board_id, title, position) VALUES (?, ?, ?, (SELECT IFNULL(MAX(position), -1) + 1 FROM lists WHERE user_id=? AND board_id=?))",
+            [req.user.id, boardId, title, req.user.id, boardId]
         );
         res.json({ id: result.id });
     } catch (err) {

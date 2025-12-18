@@ -9,7 +9,7 @@ const DB_FILE = path.resolve(__dirname, '../trello.db');
 const db = new sqlite3.Database(DB_FILE);
 
 export const initDB = () => {
-    db.serialize(() => {
+    db.serialize(async () => {
         db.run(`
             CREATE TABLE IF NOT EXISTS users (
                 id TEXT PRIMARY KEY,
@@ -17,14 +17,34 @@ export const initDB = () => {
                 name TEXT
             )
         `);
+
+        // 1. Create BOARDS table
+        db.run(`
+            CREATE TABLE IF NOT EXISTS boards (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT,
+                name TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        // 2. Create LISTS table (original definition for fresh installs)
         db.run(`
             CREATE TABLE IF NOT EXISTS lists (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id TEXT,
+                board_id INTEGER,
                 title TEXT,
                 position INTEGER
             )
         `);
+
+        // 3. SCHEMA MIGRATION: Add board_id to lists if missing
+        // We use a try-catch block for the column addition because SQLite doesn't have "IF COLUMN NOT EXISTS"
+        db.run("ALTER TABLE lists ADD COLUMN board_id INTEGER", (err) => {
+            // Ignore error if column already exists
+        });
+
         db.run(`
             CREATE TABLE IF NOT EXISTS cards (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -50,6 +70,35 @@ export const initDB = () => {
                 FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
             )
         `);
+
+        // 4. DATA MIGRATION: Fix orphan lists (lists with null board_id)
+        // This needs to run after table alterations are committed/complete.
+        // Since db.serialize ensures sequential execution, this should be safe.
+        db.all("SELECT DISTINCT user_id FROM lists WHERE board_id IS NULL", [], (err, rows) => {
+            if (err) {
+                console.error("Migration check failed:", err);
+                return;
+            }
+            if (rows && rows.length > 0) {
+                console.log(`Migrating data for ${rows.length} users...`);
+                rows.forEach(row => {
+                    const userId = row.user_id;
+                    // Create a default board for this user
+                    db.run("INSERT INTO boards (user_id, name) VALUES (?, ?)", [userId, 'Main Board'], function (err) {
+                        if (err) {
+                            console.error(`Failed to create board for user ${userId}`, err);
+                            return;
+                        }
+                        const newBoardId = this.lastID;
+                        // Assign all orphan lists of this user to the new board
+                        db.run("UPDATE lists SET board_id=? WHERE user_id=? AND board_id IS NULL", [newBoardId, userId], (err) => {
+                            if (err) console.error(`Failed to update lists for user ${userId}`, err);
+                            else console.log(`Migrated lists for user ${userId} to Board ${newBoardId}`);
+                        });
+                    });
+                });
+            }
+        });
     });
 };
 

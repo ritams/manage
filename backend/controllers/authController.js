@@ -11,6 +11,13 @@ export const googleLogin = async (req, res) => {
             [user.sub, user.email, user.name]
         );
 
+        // Ensure user has at least one board
+        const boards = await db.query("SELECT id FROM boards WHERE user_id = ?", [user.sub]);
+        if (boards.length === 0) {
+            await db.run("INSERT INTO boards (user_id, name) VALUES (?, ?)", [user.sub, "Main Board"]);
+            console.log(`Created default 'Main Board' for user: ${user.email}`);
+        }
+
         const session = generateSession(user);
 
         res.cookie("session", session, {

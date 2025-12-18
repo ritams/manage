@@ -1,7 +1,11 @@
 import express from 'express';
 import { authMiddleware } from '../auth.js';
 import {
-    getBoard,
+    getBoards,
+    createBoard,
+    updateBoard,
+    deleteBoard,
+    getLists,
     createList,
     updateList,
     deleteList,
@@ -24,8 +28,16 @@ const router = express.Router();
 // Apply auth middleware to all board routes
 router.use(authMiddleware);
 
-// Board/List operations
-router.get('/board', getBoard);
+// Board management operations
+router.get('/boards', getBoards);           // Get all boards for user
+router.post('/boards', createBoard);        // Create new board
+router.put('/boards/:id', updateBoard);     // Update board (rename)
+router.delete('/boards/:id', deleteBoard);  // Delete board
+
+// List operations (renamed /board -> /lists for clarity, but keeping alias if needed or just changing)
+// The original was router.get('/board', getBoard); which returned lists. 
+// We will update it to take query param ?boardId=...
+router.get('/lists', getLists);
 router.post('/lists', createList);
 router.put('/lists/reorder', reorderLists);
 router.put('/lists/:id', updateList);
