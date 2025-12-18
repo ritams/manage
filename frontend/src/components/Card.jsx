@@ -1,5 +1,6 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { Badge } from "@/components/ui/badge";
 import { Card as ShadcnCard, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2, X, Check, MoreHorizontal, Trash } from "lucide-react";
@@ -18,7 +19,7 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-export default function Card({ card, onDelete, onUpdate }) {
+export default function Card({ card, onDelete, onUpdate, onRemoveTag }) {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
         id: `card-${card.id}`,
         data: { type: "Card", card }
@@ -84,7 +85,32 @@ export default function Card({ card, onDelete, onUpdate }) {
                     className="p-4 text-sm font-semibold text-foreground/80 leading-relaxed break-words relative pr-10 cursor-pointer"
                     onClick={() => setIsEditing(true)}
                 >
-                    <div className="flex items-start gap-2">
+                    <div className="flex flex-col gap-2 w-full">
+                        {card.tags && card.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5 mb-1">
+                                {card.tags.map(tag => (
+                                    <div
+                                        key={tag.id}
+                                        className="group/tag relative flex items-center"
+                                        onPointerDown={(e) => e.stopPropagation()}
+                                        onClick={(e) => e.stopPropagation()}
+                                    >
+                                        <Badge
+                                            className="px-2 py-0.5 rounded-full text-[10px] font-bold border-none shadow-sm transition-all whitespace-nowrap"
+                                            style={{ backgroundColor: tag.color, color: '#fff' }}
+                                        >
+                                            {tag.name}
+                                        </Badge>
+                                        <button
+                                            className="absolute -right-1 -top-1 w-3.5 h-3.5 bg-zinc-900 rounded-full flex items-center justify-center opacity-0 group-hover/tag:opacity-100 transition-opacity hover:bg-zinc-800"
+                                            onClick={() => onRemoveTag && onRemoveTag(card.id, tag.id)}
+                                        >
+                                            <X className="w-2.5 h-2.5 text-white" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                         <span className="flex-1">{card.text}</span>
                     </div>
 

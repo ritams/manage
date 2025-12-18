@@ -13,12 +13,34 @@ export const getBoard = async (req, res) => {
         const placeholders = listIds.map(() => "?").join(",");
 
         const cards = await db.query(
-            `SELECT * FROM cards WHERE list_id IN (${placeholders})`,
+            `SELECT cards.*, tags.id as tag_id, tags.name as tag_name, tags.color as tag_color 
+             FROM cards 
+             LEFT JOIN card_tags ON cards.id = card_tags.card_id 
+             LEFT JOIN tags ON card_tags.tag_id = tags.id
+             WHERE cards.list_id IN (${placeholders})`,
             listIds
         );
 
+        // Group tags by card_id
+        const cardMap = new Map();
+        cards.forEach(row => {
+            if (!cardMap.has(row.id)) {
+                const { tag_id, tag_name, tag_color, ...cardData } = row;
+                cardMap.set(row.id, { ...cardData, tags: [] });
+            }
+            if (row.tag_id) {
+                cardMap.get(row.id).tags.push({
+                    id: row.tag_id,
+                    name: row.tag_name,
+                    color: row.tag_color
+                });
+            }
+        });
+
+        const groupedCards = Array.from(cardMap.values());
+
         lists.forEach(l => {
-            l.cards = cards
+            l.cards = groupedCards
                 .filter(c => c.list_id === l.id)
                 .sort((a, b) => a.position - b.position);
         });
@@ -209,6 +231,102 @@ export const reorderCards = async (req, res) => {
                 );
             }
         });
+        res.json({ ok: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+/* ================== TAG OPERATIONS ================== */
+
+export const getTags = async (req, res) => {
+    try {
+        const tags = await db.query("SELECT * FROM tags WHERE user_id=?", [req.user.id]);
+        res.json(tags);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+export const createTag = async (req, res) => {
+    const { name, color } = req.body;
+    try {
+        if (!name || typeof name !== 'string' || name.trim().length === 0) {
+            return res.status(400).json({ error: "Invalid name" });
+        }
+        const result = await db.run(
+            "INSERT INTO tags (user_id, name, color) VALUES (?, ?, ?)",
+            [req.user.id, name, color || "#3b82f6"]
+        );
+        res.json({ id: result.id, name, color });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+export const updateTag = async (req, res) => {
+    const { name, color } = req.body;
+    try {
+        const result = await db.run(
+            "UPDATE tags SET name=?, color=? WHERE id=? AND user_id=?",
+            [name, color, req.params.id, req.user.id]
+        );
+        if (result.changes === 0) return res.status(404).json({ error: "Tag not found or unauthorized" });
+        res.json({ ok: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+export const deleteTag = async (req, res) => {
+    try {
+        const result = await db.run(
+            "DELETE FROM tags WHERE id=? AND user_id=?",
+            [req.params.id, req.user.id]
+        );
+        if (result.changes === 0) return res.status(404).json({ error: "Tag not found or unauthorized" });
+        res.json({ ok: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+export const addTagToCard = async (req, res) => {
+    const { cardId, tagId } = req.body;
+    try {
+        // Verify ownership of both card and tag
+        const card = await db.query(
+            `SELECT 1 FROM cards 
+             JOIN lists ON cards.list_id = lists.id 
+             WHERE cards.id=? AND lists.user_id=?`,
+            [cardId, req.user.id]
+        );
+        if (!card || card.length === 0) return res.status(404).json({ error: "Card not found or unauthorized" });
+
+        const tag = await db.query("SELECT 1 FROM tags WHERE id=? AND user_id=?", [tagId, req.user.id]);
+        if (!tag || tag.length === 0) return res.status(404).json({ error: "Tag not found or unauthorized" });
+
+        await db.run("INSERT OR IGNORE INTO card_tags (card_id, tag_id) VALUES (?, ?)", [cardId, tagId]);
+        res.json({ ok: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+export const removeTagFromCard = async (req, res) => {
+    const { cardId, tagId } = req.body;
+    try {
+        // Verify card ownership (simplified check)
+        const result = await db.run(
+            `DELETE FROM card_tags 
+             WHERE card_id=? AND tag_id=? AND EXISTS (
+                SELECT 1 FROM cards 
+                JOIN lists ON cards.list_id = lists.id 
+                WHERE cards.id=? AND lists.user_id=?
+             )`,
+            [cardId, tagId, cardId, req.user.id]
+        );
+        if (result.changes === 0) return res.status(404).json({ error: "Association not found or unauthorized" });
         res.json({ ok: true });
     } catch (err) {
         res.status(500).json({ error: err.message });

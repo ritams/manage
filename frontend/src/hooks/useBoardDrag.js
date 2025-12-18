@@ -7,10 +7,11 @@ import {
 } from "@dnd-kit/core";
 import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 
-export function useBoardDrag(lists, setLists, reorderLists, moveCard, reorderCards) {
+export function useBoardDrag(lists, setLists, reorderLists, moveCard, reorderCards, addTagToCard) {
     const [activeId, setActiveId] = useState(null);
     const [activeList, setActiveList] = useState(null);
     const [activeCard, setActiveCard] = useState(null);
+    const [activeTag, setActiveTag] = useState(null);
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -38,8 +39,10 @@ export function useBoardDrag(lists, setLists, reorderLists, moveCard, reorderCar
 
         if (active.data.current?.type === "List") {
             setActiveList(active.data.current.list);
-        } else {
+        } else if (active.data.current?.type === "Card") {
             setActiveCard(active.data.current.card);
+        } else if (active.data.current?.type === "Tag") {
+            setActiveTag(active.data.current.tag);
         }
     };
 
@@ -117,6 +120,7 @@ export function useBoardDrag(lists, setLists, reorderLists, moveCard, reorderCar
         setActiveId(null);
         setActiveList(null);
         setActiveCard(null);
+        setActiveTag(null);
 
         if (!over) return;
 
@@ -140,6 +144,14 @@ export function useBoardDrag(lists, setLists, reorderLists, moveCard, reorderCar
             if (oldIndex !== -1 && newIndex !== -1) {
                 const newLists = arrayMove(lists, oldIndex, newIndex);
                 reorderLists(newLists);
+            }
+            return;
+        }
+
+        if (active.data.current?.type === "Tag") {
+            if (over.data.current?.type === "Card") {
+                const cardId = parseId(over.id);
+                addTagToCard(cardId, active.data.current.tag.id);
             }
             return;
         }
@@ -168,6 +180,7 @@ export function useBoardDrag(lists, setLists, reorderLists, moveCard, reorderCar
         activeId,
         activeList,
         activeCard,
+        activeTag,
         handleDragStart,
         handleDragEnd,
         handleDragOver,

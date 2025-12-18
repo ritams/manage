@@ -3,12 +3,17 @@ import { api } from "@/lib/api";
 
 export function useBoardData() {
     const [lists, setLists] = useState([]);
+    const [tags, setTags] = useState([]);
     const [loading, setLoading] = useState(true);
 
     const loadBoard = async () => {
         try {
-            const data = await api.board.get();
-            setLists(data);
+            const [boardData, tagData] = await Promise.all([
+                api.board.get(),
+                api.tags.get()
+            ]);
+            setLists(boardData);
+            setTags(tagData);
         } catch (err) {
             console.error(err);
         } finally {
@@ -149,6 +154,77 @@ export function useBoardData() {
         }
     };
 
+    const addTagToCard = async (cardId, tagId) => {
+        // Optimistic update
+        setLists(prev => prev.map(l => ({
+            ...l,
+            cards: l.cards.map(c => {
+                if (c.id === cardId) {
+                    const tag = tags.find(t => t.id === tagId);
+                    if (tag && !c.tags.some(t => t.id === tagId)) {
+                        return { ...c, tags: [...c.tags, tag] };
+                    }
+                }
+                return c;
+            })
+        })));
+
+        try {
+            await api.cards.addTag(cardId, tagId);
+        } catch (err) {
+            console.error(err);
+            loadBoard();
+        }
+    };
+
+    const removeTagFromCard = async (cardId, tagId) => {
+        // Optimistic update
+        setLists(prev => prev.map(l => ({
+            ...l,
+            cards: l.cards.map(c => {
+                if (c.id === cardId) {
+                    return { ...c, tags: c.tags.filter(t => t.id !== tagId) };
+                }
+                return c;
+            })
+        })));
+
+        try {
+            await api.cards.removeTag(cardId, tagId);
+        } catch (err) {
+            console.error(err);
+            loadBoard();
+        }
+    };
+
+    const createTag = async (name, color) => {
+        try {
+            const newTag = await api.tags.create(name, color);
+            setTags(prev => [...prev, newTag]);
+            return newTag;
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const deleteTag = async (id) => {
+        setTags(prev => prev.filter(t => t.id !== id));
+        try {
+            await api.tags.delete(id);
+            // Also update lists to remove this tag from cards
+            setLists(prev => prev.map(l => ({
+                ...l,
+                cards: l.cards.map(c => ({
+                    ...c,
+                    tags: c.tags.filter(t => t.id !== id)
+                }))
+            })));
+        } catch (err) {
+            console.error(err);
+            loadBoard();
+        }
+    };
+
     return {
         lists,
         setLists,
@@ -161,6 +237,11 @@ export function useBoardData() {
         updateCard,
         deleteCard,
         moveCard,
-        reorderCards
+        reorderCards,
+        tags,
+        addTagToCard,
+        removeTagFromCard,
+        createTag,
+        deleteTag
     };
 }

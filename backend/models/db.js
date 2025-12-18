@@ -33,6 +33,23 @@ export const initDB = () => {
                 position INTEGER
             )
         `);
+        db.run(`
+            CREATE TABLE IF NOT EXISTS tags (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT,
+                name TEXT,
+                color TEXT
+            )
+        `);
+        db.run(`
+            CREATE TABLE IF NOT EXISTS card_tags (
+                card_id INTEGER,
+                tag_id INTEGER,
+                PRIMARY KEY (card_id, tag_id),
+                FOREIGN KEY (card_id) REFERENCES cards(id) ON DELETE CASCADE,
+                FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
+            )
+        `);
     });
 };
 

@@ -10,7 +10,13 @@ import {
     updateCard,
     deleteCard,
     moveCard,
-    reorderCards
+    reorderCards,
+    getTags,
+    createTag,
+    updateTag,
+    deleteTag,
+    addTagToCard,
+    removeTagFromCard
 } from '../controllers/boardController.js';
 
 const router = express.Router();
@@ -31,5 +37,13 @@ router.put('/cards/reorder', reorderCards);
 router.post('/cards/move', moveCard);
 router.put('/cards/:id', updateCard);
 router.delete('/cards/:id', deleteCard);
+
+// Tag operations
+router.get('/tags', getTags);
+router.post('/tags', createTag);
+router.put('/tags/:id', updateTag);
+router.delete('/tags/:id', deleteTag);
+router.post('/cards/tags', addTagToCard);
+router.delete('/cards/tags', removeTagFromCard);
 
 export default router;

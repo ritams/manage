@@ -11,6 +11,7 @@ import { SortableContext, horizontalListSortingStrategy } from "@dnd-kit/sortabl
 import List from "./List";
 import Card from "./Card";
 import BoardHeader from "./BoardHeader";
+import TagDock from "./TagDock";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus } from "lucide-react";
@@ -30,19 +31,24 @@ export default function Board({ user, onLogout }) {
         updateCard,
         deleteCard,
         moveCard,
-        reorderCards
+        reorderCards,
+        tags,
+        addTagToCard,
+        removeTagFromCard,
+        createTag,
+        deleteTag
     } = useBoardData();
 
     const {
         sensors,
-        activeId,
         activeList,
         activeCard,
+        activeTag,
         handleDragStart,
         handleDragEnd,
         handleDragOver,
         formatListId
-    } = useBoardDrag(lists, setLists, reorderLists, moveCard, reorderCards);
+    } = useBoardDrag(lists, setLists, reorderLists, moveCard, reorderCards, addTagToCard);
 
     const [isAddingList, setIsAddingList] = useState(false);
     const [newListTitle, setNewListTitle] = useState("");
@@ -97,6 +103,7 @@ export default function Board({ user, onLogout }) {
                                     onUpdateList={updateList}
                                     onDeleteCard={deleteCard}
                                     onUpdateCard={updateCard}
+                                    onRemoveTag={removeTagFromCard}
                                 />
                             ))}
 
@@ -148,8 +155,20 @@ export default function Board({ user, onLogout }) {
                         />
                     ) : activeCard ? (
                         <Card card={activeCard} />
+                    ) : activeTag ? (
+                        <div
+                            className="px-3 py-1 rounded-full text-xs font-bold shadow-lg animate-in zoom-in-95"
+                            style={{ backgroundColor: activeTag.color, color: '#fff' }}
+                        >
+                            {activeTag.name}
+                        </div>
                     ) : null}
                 </DragOverlay>
+                <TagDock
+                    tags={tags}
+                    onCreateTag={createTag}
+                    onDeleteTag={deleteTag}
+                />
             </DndContext>
         </div>
     );
