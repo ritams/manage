@@ -86,7 +86,7 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --font-sans: 'Inter', sans-serif;
-  --font-heading: 'Nunito', sans-serif;
+  --font-heading: 'Outfit', sans-serif;
 }
 
 @layer base {
