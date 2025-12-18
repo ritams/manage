@@ -10,16 +10,10 @@ export default function BoardHeader({ user, onLogout }) {
             <div className="flex items-center gap-3 group cursor-pointer">
                 <div className="flex items-center gap-2">
                     <span className="font-heading font-bold text-3xl tracking-tight text-primary transition-all group-hover:tracking-normal">Manage</span>
-                    <Badge variant="outline" className="hidden sm:flex h-5 px-1.5 text-[10px] font-bold uppercase tracking-widest border-primary/20 text-primary bg-primary/5">Pro</Badge>
                 </div>
             </div>
 
             <div className="flex items-center gap-6">
-                <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-full bg-secondary/50 border border-border/50 text-xs font-semibold text-muted-foreground">
-                    <Sparkles className="w-3 h-3 text-primary" />
-                    Focus Mode Active
-                </div>
-
                 <div className="flex items-center gap-4">
                     <ThemeToggle />
                     <Popover>
