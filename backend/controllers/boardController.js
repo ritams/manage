@@ -313,9 +313,11 @@ export const addTagToCard = async (req, res) => {
     }
 };
 
+// Refactored to use params for DELETE compatibility
 export const removeTagFromCard = async (req, res) => {
-    const { cardId, tagId } = req.body;
+    const { cardId, tagId } = req.params;
     try {
+        console.log(`[DEBUG] Attempting to remove tag. CardID: ${cardId}, TagID: ${tagId}, UserID: ${req.user.id}`);
         // Verify card ownership (simplified check)
         const result = await db.run(
             `DELETE FROM card_tags 
@@ -326,6 +328,8 @@ export const removeTagFromCard = async (req, res) => {
              )`,
             [cardId, tagId, cardId, req.user.id]
         );
+        console.log(`[DEBUG] Delete Result:`, result);
+
         if (result.changes === 0) return res.status(404).json({ error: "Association not found or unauthorized" });
         res.json({ ok: true });
     } catch (err) {

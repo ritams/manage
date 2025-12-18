@@ -2,6 +2,9 @@ import { useState } from "react";
 import {
     DndContext,
     closestCorners,
+    pointerWithin,
+    rectIntersection,
+    getFirstCollision,
     DragOverlay,
     defaultDropAnimationSideEffects,
     MeasuringStrategy
@@ -81,7 +84,14 @@ export default function Board({ user, onLogout }) {
 
             <DndContext
                 sensors={sensors}
-                collisionDetection={closestCorners}
+                collisionDetection={(args) => {
+                    // Strict collision for Tags (Pointer MUST be over the card)
+                    if (args.active.data.current?.type === "Tag") {
+                        return pointerWithin(args);
+                    }
+                    // For Cards/Lists, use closestCorners (better for sorting)
+                    return closestCorners(args);
+                }}
                 onDragStart={handleDragStart}
                 onDragOver={handleDragOver}
                 onDragEnd={handleDragEnd}

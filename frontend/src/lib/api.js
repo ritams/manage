@@ -38,7 +38,7 @@ export const api = {
         reorder: (cardIds) => fetchWithAuth("/cards/reorder", { method: "PUT", body: JSON.stringify({ cardIds }) }),
         move: (cardId, listId) => fetchWithAuth("/cards/move", { method: "POST", body: JSON.stringify({ cardId, listId }) }),
         addTag: (cardId, tagId) => fetchWithAuth("/cards/tags", { method: "POST", body: JSON.stringify({ cardId, tagId }) }),
-        removeTag: (cardId, tagId) => fetchWithAuth("/cards/tags", { method: "DELETE", body: JSON.stringify({ cardId, tagId }) }),
+        removeTag: (cardId, tagId) => fetchWithAuth(`/cards/${cardId}/tags/${tagId}`, { method: "DELETE" }),
     },
     tags: {
         get: () => fetchWithAuth("/tags"),

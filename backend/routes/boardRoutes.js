@@ -44,6 +44,6 @@ router.post('/tags', createTag);
 router.put('/tags/:id', updateTag);
 router.delete('/tags/:id', deleteTag);
 router.post('/cards/tags', addTagToCard);
-router.delete('/cards/tags', removeTagFromCard);
+router.delete('/cards/:cardId/tags/:tagId', removeTagFromCard);
 
 export default router;
