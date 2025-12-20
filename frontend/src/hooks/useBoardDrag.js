@@ -56,7 +56,10 @@ export function useBoardDrag(lists, setLists, reorderLists, moveCard, reorderCar
         if (activeIdStr === overIdStr) return;
 
         const isActiveList = active.data.current?.type === "List";
-        if (isActiveList) return;
+        const isActiveCard = active.data.current?.type === "Card";
+
+        // handleDragOver is only for Cards moving between/within lists
+        if (!isActiveCard) return;
 
         const activeCardId = parseId(activeIdStr);
         const overIdParsed = parseId(overIdStr);
