@@ -2,18 +2,57 @@ import { useState, useEffect } from "react";
 import { api } from "@/lib/api";
 
 export function useBoardData() {
+    const [boards, setBoards] = useState([]);
+    const [activeBoard, setActiveBoard] = useState(null);
     const [lists, setLists] = useState([]);
     const [tags, setTags] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    const loadBoard = async () => {
+    // Initial load: Fetch boards and tags
+    useEffect(() => {
+        const init = async () => {
+            try {
+                const [boardsData, tagsData] = await Promise.all([
+                    api.boards.get(),
+                    api.tags.get()
+                ]);
+                setBoards(boardsData);
+                setTags(tagsData);
+
+                // Determine active board
+                if (boardsData.length > 0) {
+                    const savedBoardId = localStorage.getItem("lastBoardId");
+                    const foundBoard = boardsData.find(b => b.id.toString() === savedBoardId);
+                    const boardToLoad = foundBoard || boardsData[0];
+                    setActiveBoard(boardToLoad);
+                    // Fetch lists for this board
+                    const listsData = await api.lists.get(boardToLoad.id);
+                    setLists(listsData);
+                    localStorage.setItem("lastBoardId", boardToLoad.id);
+                } else {
+                    // Should theoretically not happen if migration works, but handle empty
+                    setLists([]);
+                }
+            } catch (err) {
+                console.error("Failed to initialize board data:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        init();
+    }, []);
+
+    // Switch board function
+    const switchBoard = async (boardId) => {
+        const board = boards.find(b => b.id === boardId);
+        if (!board) return;
+
+        setActiveBoard(board);
+        setLoading(true);
         try {
-            const [boardData, tagData] = await Promise.all([
-                api.board.get(),
-                api.tags.get()
-            ]);
-            setLists(boardData);
-            setTags(tagData);
+            const listsData = await api.lists.get(board.id);
+            setLists(listsData);
+            localStorage.setItem("lastBoardId", board.id);
         } catch (err) {
             console.error(err);
         } finally {
@@ -21,24 +60,64 @@ export function useBoardData() {
         }
     };
 
-    useEffect(() => {
-        loadBoard();
-    }, []);
+    const createBoard = async (name) => {
+        console.log("[useBoardData] createBoard called with:", name);
+        try {
+            const newBoard = await api.boards.create(name);
+            console.log("[useBoardData] API create returned:", newBoard);
+            setBoards(prev => [...prev, newBoard]);
+
+            // Critical Fix: Directly set active board because 'boards' state is stale here
+            console.log("[useBoardData] Setting active board to:", newBoard);
+            setActiveBoard(newBoard);
+            setLists([]); // New board has no lists
+            localStorage.setItem("lastBoardId", newBoard.id);
+
+            return newBoard;
+        } catch (err) {
+            console.error("[useBoardData] createBoard failed:", err);
+        }
+    };
+
+    const updateBoard = async (id, name) => {
+        console.log("[useBoardData] updateBoard called for ID:", id, "Name:", name);
+        console.log("[useBoardData] Current activeBoard:", activeBoard);
+
+        try {
+            await api.boards.update(id, name);
+            console.log("[useBoardData] API update verified");
+
+            setBoards(prev => prev.map(b => b.id == id ? { ...b, name } : b));
+
+            // Relaxed check to handle string vs number ID mismatch
+            if (activeBoard && activeBoard.id == id) {
+                console.log("[useBoardData] Updating activeBoard state locally");
+                setActiveBoard(prev => ({ ...prev, name }));
+            } else {
+                console.log("[useBoardData] activeBoard ID mismatch or null. Active:", activeBoard?.id, "Target:", id);
+            }
+        } catch (err) {
+            console.error("[useBoardData] updateBoard error:", err);
+        }
+    };
+
 
     const createList = async (title) => {
-        if (!title.trim()) return;
+        if (!title.trim() || !activeBoard) return;
         // Optimistic update
         const tempId = Date.now();
-        const newList = { id: tempId, title, position: lists.length, cards: [] };
+        const newList = { id: tempId, board_id: activeBoard.id, title, position: lists.length, cards: [] };
         setLists([...lists, newList]);
 
         try {
-            const { id } = await api.lists.create(title);
+            const { id } = await api.lists.create(activeBoard.id, title);
             // Replace tempId with real id
             setLists(prev => prev.map(l => l.id === tempId ? { ...l, id } : l));
         } catch (err) {
             console.error(err);
-            loadBoard(); // Rollback on error
+            // Reload current board to be safe
+            const data = await api.lists.get(activeBoard.id);
+            setLists(data);
         }
     };
 
@@ -70,7 +149,11 @@ export function useBoardData() {
             await api.lists.reorder(newLists.map(l => l.id));
         } catch (err) {
             console.error("Failed to reorder lists:", err);
-            loadBoard(); // Rollback if server fails
+            // Reload current board
+            if (activeBoard) {
+                const data = await api.lists.get(activeBoard.id);
+                setLists(data);
+            }
         }
     };
 
@@ -226,6 +309,11 @@ export function useBoardData() {
     };
 
     return {
+        boards,
+        activeBoard,
+        switchBoard,
+        createBoard,
+        updateBoard,
         lists,
         setLists,
         loading,

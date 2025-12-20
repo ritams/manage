@@ -22,11 +22,17 @@ export const api = {
         me: () => fetchWithAuth("/auth/me"),
         logout: () => fetchWithAuth("/auth/logout", { method: "POST" }),
     },
-    board: {
-        get: () => fetchWithAuth("/board"),
+    boards: {
+        get: () => fetchWithAuth("/boards"),
+        create: (name) => fetchWithAuth("/boards", { method: "POST", body: JSON.stringify({ name }) }),
+        update: (id, name) => fetchWithAuth(`/boards/${id}`, { method: "PUT", body: JSON.stringify({ name }) }),
+        delete: (id) => fetchWithAuth(`/boards/${id}`, { method: "DELETE" }),
     },
     lists: {
-        create: (title) => fetchWithAuth("/lists", { method: "POST", body: JSON.stringify({ title }) }),
+        // Updated to use /lists endpoint (which was aliased to /board in backend routes but clearer here)
+        // And accepts boardId
+        get: (boardId) => fetchWithAuth(`/lists?boardId=${boardId}`),
+        create: (boardId, title) => fetchWithAuth("/lists", { method: "POST", body: JSON.stringify({ boardId, title }) }),
         delete: (id) => fetchWithAuth(`/lists/${id}`, { method: "DELETE" }),
         update: (id, title) => fetchWithAuth(`/lists/${id}`, { method: "PUT", body: JSON.stringify({ title }) }),
         reorder: (listIds) => fetchWithAuth("/lists/reorder", { method: "PUT", body: JSON.stringify({ listIds }) }),
