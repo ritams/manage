@@ -106,11 +106,25 @@ export const initDB = () => {
             }
         });
 
-        // 5. INDEXES for Performance
+        // 5. Create BOARD_MEMBERS table
+        db.run(`
+            CREATE TABLE IF NOT EXISTS board_members (
+                board_id INTEGER,
+                user_id TEXT,
+                role TEXT DEFAULT 'editor',
+                added_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (board_id, user_id),
+                FOREIGN KEY(board_id) REFERENCES boards(id) ON DELETE CASCADE,
+                FOREIGN KEY(user_id) REFERENCES users(id)
+            )
+        `);
+
+        // 6. INDEXES for Performance
         db.run("CREATE INDEX IF NOT EXISTS idx_lists_board_id ON lists(board_id)");
         db.run("CREATE INDEX IF NOT EXISTS idx_cards_list_id ON cards(list_id)");
         db.run("CREATE INDEX IF NOT EXISTS idx_card_tags_card_id ON card_tags(card_id)");
         db.run("CREATE INDEX IF NOT EXISTS idx_card_tags_tag_id ON card_tags(tag_id)");
+        db.run("CREATE INDEX IF NOT EXISTS idx_board_members_user_id ON board_members(user_id)");
     });
 };
 

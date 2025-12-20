@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { api } from "@/lib/api";
+import { useSocket } from "@/context/SocketProvider";
 
 export function useBoardData() {
     const [boards, setBoards] = useState([]);
@@ -7,6 +8,7 @@ export function useBoardData() {
     const [lists, setLists] = useState([]);
     const [tags, setTags] = useState([]);
     const [loading, setLoading] = useState(true);
+    const socket = useSocket();
 
     // Initial load: Fetch boards and tags
     useEffect(() => {
@@ -41,6 +43,26 @@ export function useBoardData() {
         };
         init();
     }, []);
+
+    // Socket integration
+    useEffect(() => {
+        if (!socket || !activeBoard) return;
+
+        socket.emit('JOIN_BOARD', activeBoard.id);
+
+        const handleUpdate = async () => {
+            console.log("Received BOARD_UPDATED, refreshing lists...");
+            const data = await api.lists.get(activeBoard.id);
+            setLists(data);
+        };
+
+        socket.on('BOARD_UPDATED', handleUpdate);
+
+        return () => {
+            socket.emit('LEAVE_BOARD', activeBoard.id);
+            socket.off('BOARD_UPDATED', handleUpdate);
+        };
+    }, [socket, activeBoard?.id]);
 
     // Switch board function
     const switchBoard = async (boardId) => {

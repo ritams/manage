@@ -1,4 +1,15 @@
 import db from '../models/db.js';
+import { getIO } from '../socket.js';
+
+const checkBoardAccess = async (userId, boardId) => {
+    const access = await db.query(
+        `SELECT 1 FROM boards WHERE id=? AND user_id=?
+         UNION
+         SELECT 1 FROM board_members WHERE board_id=? AND user_id=?`,
+        [boardId, userId, boardId, userId]
+    );
+    return access.length > 0;
+};
 
 export const getLists = async (req, res) => {
     const { boardId } = req.query;
@@ -7,9 +18,7 @@ export const getLists = async (req, res) => {
         throw new Error("boardId required");
     }
 
-    // Verify board ownership
-    const board = await db.query("SELECT id FROM boards WHERE id=? AND user_id=?", [boardId, req.user.id]);
-    if (!board || board.length === 0) {
+    if (!await checkBoardAccess(req.user.id, boardId)) {
         res.status(404);
         throw new Error("Board not found or unauthorized");
     }
@@ -33,7 +42,7 @@ export const getLists = async (req, res) => {
         listIds
     );
 
-    // Group tags by card_id
+    // Group cards and tags
     const cardMap = new Map();
     cards.forEach(row => {
         if (!cardMap.has(row.id)) {
@@ -75,9 +84,7 @@ export const createList = async (req, res) => {
         throw new Error("Title too long (max 255 chars)");
     }
 
-    // Verify board ownership
-    const board = await db.query("SELECT id FROM boards WHERE id=? AND user_id=?", [boardId, req.user.id]);
-    if (!board || board.length === 0) {
+    if (!await checkBoardAccess(req.user.id, boardId)) {
         res.status(404);
         throw new Error("Board not found or unauthorized");
     }
@@ -86,52 +93,80 @@ export const createList = async (req, res) => {
         "INSERT INTO lists (user_id, board_id, title, position) VALUES (?, ?, ?, (SELECT IFNULL(MAX(position), -1) + 1 FROM lists WHERE board_id=?))",
         [req.user.id, boardId, title, boardId]
     );
+
+    getIO().to(`board_${boardId}`).emit('BOARD_UPDATED');
     res.json({ id: result.id });
 };
 
 export const updateList = async (req, res) => {
     const { title } = req.body;
+    const { id } = req.params;
+
     if (!title || typeof title !== 'string' || title.trim().length === 0) {
         res.status(400);
         throw new Error("Invalid title");
     }
-    if (title.length > 255) {
-        res.status(400);
-        throw new Error("Title too long (max 255 chars)");
-    }
-    // Check if list belongs to a board owned by user
-    // Actually we can just check user_id on list as per schema, assuming user_id was set correctly on creation.
-    // The createList sets user_id.
-    const result = await db.run(
-        "UPDATE lists SET title=? WHERE id=? AND user_id=?",
-        [title, req.params.id, req.user.id]
-    );
-    if (result.changes === 0) {
+
+    // Get board_id to check access
+    const list = await db.query("SELECT board_id FROM lists WHERE id=?", [id]);
+    if (!list.length) {
         res.status(404);
-        throw new Error("List not found or unauthorized");
+        throw new Error("List not found");
     }
+    const boardId = list[0].board_id;
+
+    if (!await checkBoardAccess(req.user.id, boardId)) {
+        res.status(403);
+        throw new Error("Unauthorized");
+    }
+
+    await db.run("UPDATE lists SET title=? WHERE id=?", [title, id]);
+
+    getIO().to(`board_${boardId}`).emit('BOARD_UPDATED');
     res.json({ ok: true });
 };
 
 export const deleteList = async (req, res) => {
-    // With foreign keys ON DELETE CASCADE, we just delete the list.
-    const result = await db.run("DELETE FROM lists WHERE id=? AND user_id=?", [req.params.id, req.user.id]);
-    if (result.changes === 0) {
+    const { id } = req.params;
+    const list = await db.query("SELECT board_id FROM lists WHERE id=?", [id]);
+    if (!list.length) {
         res.status(404);
-        throw new Error("List not found or unauthorized");
+        throw new Error("List not found");
     }
+    const boardId = list[0].board_id;
+
+    if (!await checkBoardAccess(req.user.id, boardId)) {
+        res.status(403);
+        throw new Error("Unauthorized");
+    }
+
+    await db.run("DELETE FROM lists WHERE id=?", [id]);
+
+    getIO().to(`board_${boardId}`).emit('BOARD_UPDATED');
     res.json({ ok: true });
 };
 
 export const reorderLists = async (req, res) => {
     const { listIds } = req.body;
-    await db.transaction(async () => {
-        for (let i = 0; i < listIds.length; i++) {
-            await db.run(
-                "UPDATE lists SET position=? WHERE id=? AND user_id=?",
-                [i, listIds[i], req.user.id]
-            );
+    if (!listIds || listIds.length === 0) return res.json({ ok: true });
+
+    // Check access for the first list (assuming all belong to same board, which they should if UI works)
+    const list = await db.query("SELECT board_id FROM lists WHERE id=?", [listIds[0]]);
+    if (list.length) {
+        const boardId = list[0].board_id;
+        if (!await checkBoardAccess(req.user.id, boardId)) {
+            res.status(403);
+            throw new Error("Unauthorized");
         }
-    });
+
+        await db.transaction(async () => {
+            for (let i = 0; i < listIds.length; i++) {
+                await db.run("UPDATE lists SET position=? WHERE id=?", [i, listIds[i]]);
+            }
+        });
+
+        getIO().to(`board_${boardId}`).emit('BOARD_UPDATED');
+    }
+
     res.json({ ok: true });
 };

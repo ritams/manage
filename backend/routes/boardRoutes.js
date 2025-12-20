@@ -5,7 +5,10 @@ import {
     getBoards,
     createBoard,
     updateBoard,
-    deleteBoard
+    deleteBoard,
+    getMembers,
+    addMember,
+    removeMember
 } from '../controllers/boardController.js';
 
 const router = express.Router();
@@ -16,5 +19,10 @@ router.get('/', asyncHandler(getBoards));
 router.post('/', asyncHandler(createBoard));
 router.put('/:id', asyncHandler(updateBoard));
 router.delete('/:id', asyncHandler(deleteBoard));
+
+// Member management
+router.get('/:id/members', asyncHandler(getMembers));
+router.post('/:id/members', asyncHandler(addMember));
+router.delete('/:id/members/:userId', asyncHandler(removeMember));
 
 export default router;

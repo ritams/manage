@@ -27,6 +27,9 @@ export const api = {
         create: (name) => fetchWithAuth("/boards", { method: "POST", body: JSON.stringify({ name }) }),
         update: (id, name) => fetchWithAuth(`/boards/${id}`, { method: "PUT", body: JSON.stringify({ name }) }),
         delete: (id) => fetchWithAuth(`/boards/${id}`, { method: "DELETE" }),
+        getMembers: (id) => fetchWithAuth(`/boards/${id}/members`),
+        addMember: (id, email) => fetchWithAuth(`/boards/${id}/members`, { method: "POST", body: JSON.stringify({ email }) }),
+        removeMember: (id, userId) => fetchWithAuth(`/boards/${id}/members/${userId}`, { method: "DELETE" }),
     },
     lists: {
         // Updated to use /lists endpoint (which was aliased to /board in backend routes but clearer here)

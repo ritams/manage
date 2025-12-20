@@ -69,9 +69,15 @@ mountRoutes("/lists", listRoutes);
 mountRoutes("/cards", cardRoutes);
 mountRoutes("/tags", tagRoutes);
 
+import { createServer } from 'http';
+import { initSocket } from './socket.js';
+
 // Error Handler Middleware (Must be last)
 app.use(errorHandler);
 
-app.listen(PORT, () =>
+const httpServer = createServer(app);
+initSocket(httpServer);
+
+httpServer.listen(PORT, () =>
     console.log(`Server running on http://localhost:${PORT}`)
 );

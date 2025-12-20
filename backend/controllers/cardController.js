@@ -1,4 +1,28 @@
 import db from '../models/db.js';
+import { getIO } from '../socket.js';
+
+const checkBoardAccess = async (userId, boardId) => {
+    const access = await db.query(
+        `SELECT 1 FROM boards WHERE id=? AND user_id=?
+         UNION
+         SELECT 1 FROM board_members WHERE board_id=? AND user_id=?`,
+        [boardId, userId, boardId, userId]
+    );
+    return access.length > 0;
+};
+
+const getBoardIdFromList = async (listId) => {
+    const list = await db.query("SELECT board_id FROM lists WHERE id=?", [listId]);
+    return list.length ? list[0].board_id : null;
+};
+
+const getBoardIdFromCard = async (cardId) => {
+    const res = await db.query(
+        "SELECT l.board_id FROM cards c JOIN lists l ON c.list_id = l.id WHERE c.id=?",
+        [cardId]
+    );
+    return res.length ? res[0].board_id : null;
+};
 
 export const createCard = async (req, res) => {
     const { listId, text } = req.body;
@@ -11,22 +35,30 @@ export const createCard = async (req, res) => {
         throw new Error("Text too long (max 1000 chars)");
     }
 
-    // Verify list ownership
-    const list = await db.query("SELECT id FROM lists WHERE id=? AND user_id=?", [listId, req.user.id]);
-    if (!list || list.length === 0) {
+    const boardId = await getBoardIdFromList(listId);
+    if (!boardId) {
         res.status(404);
-        throw new Error("List not found or unauthorized");
+        throw new Error("List not found");
+    }
+
+    if (!await checkBoardAccess(req.user.id, boardId)) {
+        res.status(403);
+        throw new Error("Unauthorized");
     }
 
     const result = await db.run(
         "INSERT INTO cards (list_id, text, position) VALUES (?, ?, (SELECT IFNULL(MAX(position), -1) + 1 FROM cards WHERE list_id=?))",
         [listId, text, listId]
     );
+
+    getIO().to(`board_${boardId}`).emit('BOARD_UPDATED');
     res.json({ id: result.id });
 };
 
 export const updateCard = async (req, res) => {
     const { text } = req.body;
+    const { id } = req.params;
+
     if (!text || typeof text !== 'string' || text.trim().length === 0) {
         res.status(400);
         throw new Error("Invalid text");
@@ -36,77 +68,102 @@ export const updateCard = async (req, res) => {
         throw new Error("Text too long (max 1000 chars)");
     }
 
-    // Check ownership via join or subquery. Using subquery to keep it simple as in original
-    const result = await db.run(
-        `UPDATE cards SET text=? 
-         WHERE id=? AND EXISTS (
-            SELECT 1 FROM lists WHERE lists.id = cards.list_id AND lists.user_id=?
-         )`,
-        [text, req.params.id, req.user.id]
-    );
-    if (result.changes === 0) {
+    const boardId = await getBoardIdFromCard(id);
+    if (!boardId) {
         res.status(404);
-        throw new Error("Card not found or unauthorized");
+        throw new Error("Card not found");
     }
+
+    if (!await checkBoardAccess(req.user.id, boardId)) {
+        res.status(403);
+        throw new Error("Unauthorized");
+    }
+
+    await db.run("UPDATE cards SET text=? WHERE id=?", [text, id]);
+
+    getIO().to(`board_${boardId}`).emit('BOARD_UPDATED');
     res.json({ ok: true });
 };
 
 export const deleteCard = async (req, res) => {
-    const result = await db.run(
-        `DELETE FROM cards 
-         WHERE id=? AND EXISTS (
-            SELECT 1 FROM lists WHERE lists.id = cards.list_id AND lists.user_id=?
-         )`,
-        [req.params.id, req.user.id]
-    );
-    if (result.changes === 0) {
+    const { id } = req.params;
+    const boardId = await getBoardIdFromCard(id);
+    if (!boardId) {
         res.status(404);
-        throw new Error("Card not found or unauthorized");
+        throw new Error("Card not found");
     }
+
+    if (!await checkBoardAccess(req.user.id, boardId)) {
+        res.status(403);
+        throw new Error("Unauthorized");
+    }
+
+    await db.run("DELETE FROM cards WHERE id=?", [id]);
+
+    getIO().to(`board_${boardId}`).emit('BOARD_UPDATED');
     res.json({ ok: true });
 };
 
 export const moveCard = async (req, res) => {
     const { cardId, listId } = req.body;
-    // Verify target list ownership
-    const targetList = await db.query("SELECT id FROM lists WHERE id=? AND user_id=?", [listId, req.user.id]);
-    if (!targetList || targetList.length === 0) {
+
+    // Check source board
+    const sourceBoardId = await getBoardIdFromCard(cardId);
+    if (!sourceBoardId) {
         res.status(404);
-        throw new Error("Target list not found or unauthorized");
+        throw new Error("Card not found");
+    }
+    if (!await checkBoardAccess(req.user.id, sourceBoardId)) {
+        res.status(403);
+        throw new Error("Unauthorized source");
+    }
+
+    // Check target board
+    const targetBoardId = await getBoardIdFromList(listId);
+    if (!targetBoardId) {
+        res.status(404);
+        throw new Error("Target list not found");
+    }
+    if (!await checkBoardAccess(req.user.id, targetBoardId)) {
+        res.status(403);
+        throw new Error("Unauthorized target");
     }
 
     // Get max position for the target list
     const maxPosResult = await db.query("SELECT MAX(position) as maxPos FROM cards WHERE list_id=?", [listId]);
     const nextPos = (maxPosResult[0].maxPos !== null) ? maxPosResult[0].maxPos + 1 : 0;
 
-    // Verify card ownership and move with updated position
-    const result = await db.run(
-        `UPDATE cards SET list_id=?, position=? 
-         WHERE id=? AND EXISTS (
-            SELECT 1 FROM lists WHERE lists.id = cards.list_id AND lists.user_id=?
-         )`,
-        [listId, nextPos, cardId, req.user.id]
-    );
+    await db.run("UPDATE cards SET list_id=?, position=? WHERE id=?", [listId, nextPos, cardId]);
 
-    if (result.changes === 0) {
-        res.status(404);
-        throw new Error("Card not found or unauthorized");
+    // Emit to both boards (usually same)
+    getIO().to(`board_${sourceBoardId}`).emit('BOARD_UPDATED');
+    if (sourceBoardId !== targetBoardId) {
+        getIO().to(`board_${targetBoardId}`).emit('BOARD_UPDATED');
     }
     res.json({ ok: true });
 };
 
 export const reorderCards = async (req, res) => {
     const { cardIds } = req.body;
+    if (!cardIds || cardIds.length === 0) return res.json({ ok: true });
+
+    const boardId = await getBoardIdFromCard(cardIds[0]);
+    if (!boardId) {
+        res.status(404);
+        throw new Error("Card not found");
+    }
+
+    if (!await checkBoardAccess(req.user.id, boardId)) {
+        res.status(403);
+        throw new Error("Unauthorized");
+    }
+
     await db.transaction(async () => {
         for (let i = 0; i < cardIds.length; i++) {
-            await db.run(
-                `UPDATE cards SET position=? 
-                 WHERE id=? AND EXISTS (
-                    SELECT 1 FROM lists WHERE lists.id = cards.list_id AND lists.user_id=?
-                 )`,
-                [i, cardIds[i], req.user.id]
-            );
+            await db.run("UPDATE cards SET position=? WHERE id=?", [i, cardIds[i]]);
         }
     });
+
+    getIO().to(`board_${boardId}`).emit('BOARD_UPDATED');
     res.json({ ok: true });
 };
