@@ -13,6 +13,10 @@ dotenv.config({ path: path.resolve(fileURLToPath(import.meta.url), '../../.env')
 import { initDB } from "./models/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import boardRoutes from "./routes/boardRoutes.js";
+import listRoutes from "./routes/listRoutes.js";
+import cardRoutes from "./routes/cardRoutes.js";
+import tagRoutes from "./routes/tagRoutes.js";
+import { errorHandler } from "./middleware/errorHandler.js";
 
 import helmet from "helmet";
 
@@ -53,10 +57,20 @@ app.use((req, res, next) => {
 
 /* ================== ROUTES ================== */
 
-app.use("/api/auth", authRoutes); // Handle requests where Nginx didn't strip /api
-app.use("/auth", authRoutes);
-app.use("/api", boardRoutes); // Handle /api/board, /api/lists etc.
-app.use("/", boardRoutes);
+// Helper to mount routes at both /api/X and /X
+const mountRoutes = (path, route) => {
+    app.use(`/api${path}`, route);
+    app.use(path, route);
+};
+
+mountRoutes("/auth", authRoutes);
+mountRoutes("/boards", boardRoutes);
+mountRoutes("/lists", listRoutes);
+mountRoutes("/cards", cardRoutes);
+mountRoutes("/tags", tagRoutes);
+
+// Error Handler Middleware (Must be last)
+app.use(errorHandler);
 
 app.listen(PORT, () =>
     console.log(`Server running on http://localhost:${PORT}`)

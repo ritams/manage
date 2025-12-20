@@ -10,6 +10,9 @@ const db = new sqlite3.Database(DB_FILE);
 
 export const initDB = () => {
     db.serialize(async () => {
+        // Enable Foreign Keys enforcement
+        db.run("PRAGMA foreign_keys = ON;");
+
         db.run(`
             CREATE TABLE IF NOT EXISTS users (
                 id TEXT PRIMARY KEY,
@@ -24,18 +27,20 @@ export const initDB = () => {
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id TEXT,
                 name TEXT,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(user_id) REFERENCES users(id)
             )
         `);
 
-        // 2. Create LISTS table (original definition for fresh installs)
+        // 2. Create LISTS table
         db.run(`
             CREATE TABLE IF NOT EXISTS lists (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id TEXT,
                 board_id INTEGER,
                 title TEXT,
-                position INTEGER
+                position INTEGER,
+                FOREIGN KEY(board_id) REFERENCES boards(id) ON DELETE CASCADE
             )
         `);
 
@@ -50,7 +55,8 @@ export const initDB = () => {
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 list_id INTEGER,
                 text TEXT,
-                position INTEGER
+                position INTEGER,
+                FOREIGN KEY(list_id) REFERENCES lists(id) ON DELETE CASCADE
             )
         `);
         db.run(`
