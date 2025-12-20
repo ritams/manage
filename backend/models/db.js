@@ -105,6 +105,12 @@ export const initDB = () => {
                 });
             }
         });
+
+        // 5. INDEXES for Performance
+        db.run("CREATE INDEX IF NOT EXISTS idx_lists_board_id ON lists(board_id)");
+        db.run("CREATE INDEX IF NOT EXISTS idx_cards_list_id ON cards(list_id)");
+        db.run("CREATE INDEX IF NOT EXISTS idx_card_tags_card_id ON card_tags(card_id)");
+        db.run("CREATE INDEX IF NOT EXISTS idx_card_tags_tag_id ON card_tags(tag_id)");
     });
 };
 
