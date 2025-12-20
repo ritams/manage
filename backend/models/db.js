@@ -119,6 +119,16 @@ export const initDB = () => {
             )
         `);
 
+        // 6. ADMIN & MONITORING MIGRATIONS
+        // Add created_at to users if missing
+        db.run("ALTER TABLE users ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP", (err) => { });
+        // Add is_admin to users if missing
+        db.run("ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0", (err) => { });
+        // Add created_at to lists if missing
+        db.run("ALTER TABLE lists ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP", (err) => { });
+        // Add created_at to cards if missing
+        db.run("ALTER TABLE cards ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP", (err) => { });
+
         // 6. INDEXES for Performance
         db.run("CREATE INDEX IF NOT EXISTS idx_lists_board_id ON lists(board_id)");
         db.run("CREATE INDEX IF NOT EXISTS idx_cards_list_id ON cards(list_id)");

@@ -7,7 +7,7 @@ export const googleLogin = async (req, res) => {
         const user = await verifyGoogleToken(token);
 
         await db.run(
-            "INSERT OR IGNORE INTO users VALUES (?, ?, ?)",
+            "INSERT OR IGNORE INTO users (id, email, name) VALUES (?, ?, ?)",
             [user.sub, user.email, user.name]
         );
 

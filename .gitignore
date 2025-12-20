@@ -36,4 +36,5 @@ yarn-error.log*
 
 # Database
 trello.db
-deploy.sh
+*.sh
+

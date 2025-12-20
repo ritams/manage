@@ -20,6 +20,31 @@ This guide covers deploying the app to an **Amazon Linux 2023** (or Amazon Linux
 
 SSH into your server and run the following commands.
 
+## 1.5 Setup Swap Space (CRITICAL for t2.nano)
+**t2.nano has only 512MB RAM.** You MUST create a swap file or `npm install` and `npm run build` will crash the server.
+
+```bash
+# Create a 2GB swap file
+sudo dd if=/dev/zero of=/swapfile bs=128M count=16
+
+# Set permissions
+sudo chmod 600 /swapfile
+
+# Make it swap
+sudo mkswap /swapfile
+
+# Enable it
+sudo swapon /swapfile
+
+# Persist on reboot
+echo "/swapfile swap swap defaults 0 0" | sudo tee -a /etc/fstab
+```
+
+```bash
+# Update packages
+sudo yum update -y
+
+
 ```bash
 # Update packages
 sudo yum update -y
@@ -144,6 +169,16 @@ server {
         
         # Hide backend info
         proxy_hide_header X-Powered-By;
+    }
+
+    # Socket.IO (WebSocket)
+    location /socket.io/ {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
     }
 }
 ```

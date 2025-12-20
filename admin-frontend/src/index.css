@@ -1,0 +1,110 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@200..900&family=Inter:wght@200..900&display=swap');
+@import "tailwindcss";
+@plugin "tailwindcss-animate";
+@custom-variant dark (&:is(.dark *));
+
+@layer base {
+  :root {
+    /* ... */
+  }
+}
+
+@theme inline {
+  /* ... */
+  --font-sans: 'Inter', sans-serif;
+  --font-heading: 'Outfit', sans-serif;
+}
+
+@layer base {
+  :root {
+    --background: 0.985 0.01 110;
+    --foreground: 0.15 0.04 110;
+    --card: 0.985 0.01 110;
+    --card-foreground: 0.15 0.04 110;
+    --popover: 1 0 0;
+    --popover-foreground: 0.15 0.04 110;
+    --primary: 0.55 0.18 113;
+    --primary-foreground: 0.98 0.01 110;
+    --secondary: 0.96 0.02 110;
+    --secondary-foreground: 0.35 0.08 113;
+    --muted: 0.96 0.02 110;
+    --muted-foreground: 0.55 0.05 110;
+    --accent: 0.94 0.03 110;
+    --accent-foreground: 0.35 0.08 113;
+    --destructive: 0.6 0.18 25;
+    --destructive-foreground: 1 0 0;
+    --border: 0.92 0.02 110;
+    --input: 0.92 0.02 110;
+    --ring: 0.55 0.18 113;
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: 0.12 0.03 113;
+    --foreground: 0.95 0.02 110;
+    --card: 0.16 0.03 113;
+    --card-foreground: 0.95 0.02 110;
+    --popover: 0.14 0.03 113;
+    --popover-foreground: 0.95 0.02 110;
+    --primary: 0.75 0.15 113;
+    --primary-foreground: 0.12 0.04 113;
+    --secondary: 0.20 0.04 113;
+    --secondary-foreground: 0.95 0.02 110;
+    --muted: 0.20 0.04 113;
+    --muted-foreground: 0.65 0.04 110;
+    --accent: 0.22 0.05 113;
+    --accent-foreground: 0.95 0.02 110;
+    --destructive: 0.4 0.15 25;
+    --destructive-foreground: 0.95 0.02 110;
+    --border: 0.22 0.03 113;
+    --input: 0.22 0.03 113;
+    --ring: 0.65 0.15 113;
+  }
+}
+
+@theme inline {
+  --color-background: oklch(var(--background));
+  --color-foreground: oklch(var(--foreground));
+  --color-card: oklch(var(--card));
+  --color-card-foreground: oklch(var(--card-foreground));
+  --color-popover: oklch(var(--popover));
+  --color-popover-foreground: oklch(var(--popover-foreground));
+  --color-primary: oklch(var(--primary));
+  --color-primary-foreground: oklch(var(--primary-foreground));
+  --color-secondary: oklch(var(--secondary));
+  --color-secondary-foreground: oklch(var(--secondary-foreground));
+  --color-muted: oklch(var(--muted));
+  --color-muted-foreground: oklch(var(--muted-foreground));
+  --color-accent: oklch(var(--accent));
+  --color-accent-foreground: oklch(var(--accent-foreground));
+  --color-destructive: oklch(var(--destructive));
+  --color-destructive-foreground: oklch(var(--destructive-foreground));
+  --color-border: oklch(var(--border));
+  --color-input: oklch(var(--input));
+  --color-ring: oklch(var(--ring));
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --font-sans: 'Inter', sans-serif;
+  --font-heading: 'Outfit', sans-serif;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans selection:bg-primary/20;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-heading;
+  }
+}
