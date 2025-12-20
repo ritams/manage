@@ -6,6 +6,11 @@ const api = axios.create({
     withCredentials: true,
 });
 
+console.log("API Config:", {
+    env: import.meta.env.VITE_API_BASE_URL,
+    finalBaseURL: api.defaults.baseURL
+});
+
 api.interceptors.response.use(
     (response) => {
         return response;

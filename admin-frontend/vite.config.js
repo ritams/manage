@@ -11,7 +11,6 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  envDir: "..",
   server: {
     port: 5174,
     strictPort: true, // Fail if port is in use, don't auto-increment
