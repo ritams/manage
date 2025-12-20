@@ -61,25 +61,43 @@ export function useBoardData() {
     };
 
     const createBoard = async (name) => {
+        console.log("[useBoardData] createBoard called with:", name);
         try {
             const newBoard = await api.boards.create(name);
+            console.log("[useBoardData] API create returned:", newBoard);
             setBoards(prev => [...prev, newBoard]);
-            switchBoard(newBoard.id);
+
+            // Critical Fix: Directly set active board because 'boards' state is stale here
+            console.log("[useBoardData] Setting active board to:", newBoard);
+            setActiveBoard(newBoard);
+            setLists([]); // New board has no lists
+            localStorage.setItem("lastBoardId", newBoard.id);
+
             return newBoard;
         } catch (err) {
-            console.error(err);
+            console.error("[useBoardData] createBoard failed:", err);
         }
     };
 
     const updateBoard = async (id, name) => {
+        console.log("[useBoardData] updateBoard called for ID:", id, "Name:", name);
+        console.log("[useBoardData] Current activeBoard:", activeBoard);
+
         try {
             await api.boards.update(id, name);
-            setBoards(prev => prev.map(b => b.id === id ? { ...b, name } : b));
-            if (activeBoard?.id === id) {
+            console.log("[useBoardData] API update verified");
+
+            setBoards(prev => prev.map(b => b.id == id ? { ...b, name } : b));
+
+            // Relaxed check to handle string vs number ID mismatch
+            if (activeBoard && activeBoard.id == id) {
+                console.log("[useBoardData] Updating activeBoard state locally");
                 setActiveBoard(prev => ({ ...prev, name }));
+            } else {
+                console.log("[useBoardData] activeBoard ID mismatch or null. Active:", activeBoard?.id, "Target:", id);
             }
         } catch (err) {
-            console.error(err);
+            console.error("[useBoardData] updateBoard error:", err);
         }
     };
 
