@@ -2,7 +2,8 @@ import { useState } from "react";
 import {
     useSensor,
     useSensors,
-    PointerSensor,
+    MouseSensor,
+    TouchSensor,
     KeyboardSensor,
 } from "@dnd-kit/core";
 import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
@@ -14,9 +15,15 @@ export function useBoardDrag(lists, setLists, reorderLists, moveCard, reorderCar
     const [activeTag, setActiveTag] = useState(null);
 
     const sensors = useSensors(
-        useSensor(PointerSensor, {
+        useSensor(MouseSensor, {
             activationConstraint: {
-                distance: 5,
+                distance: 10,
+            },
+        }),
+        useSensor(TouchSensor, {
+            activationConstraint: {
+                delay: 250,
+                tolerance: 5,
             },
         }),
         useSensor(KeyboardSensor, {
