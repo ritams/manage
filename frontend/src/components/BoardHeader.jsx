@@ -3,7 +3,7 @@ import ThemeToggle from "./ThemeToggle";
 import SharePopover from "./ShareModal"; // It was renamed in content but file is still ShareModal.jsx
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { LogOut, User, Settings, Check, Plus, Share2 } from "lucide-react";
+import { LogOut, User, Settings, Check, Plus, Share2, ZoomIn, ZoomOut } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 
-export default function BoardHeader({ user, onLogout, boards = [], activeBoard, onSwitchBoard, onCreateBoard, onUpdateBoard }) {
+export default function BoardHeader({ user, onLogout, boards = [], activeBoard, onSwitchBoard, onCreateBoard, onUpdateBoard, isZoomedOut, onToggleZoom }) {
     const [newBoardName, setNewBoardName] = useState("");
     const [isEditing, setIsEditing] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
@@ -88,15 +88,25 @@ export default function BoardHeader({ user, onLogout, boards = [], activeBoard, 
                     </div>
 
                     {!isEditing && activeBoard && (
-                        <SharePopover boardId={activeBoard.id}>
+                        <>
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all shrink-0"
+                                onClick={onToggleZoom}
+                                className="h-8 w-8 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all shrink-0 md:hidden"
                             >
-                                <Share2 className="w-4 h-4" />
+                                {isZoomedOut ? <ZoomIn className="w-4 h-4" /> : <ZoomOut className="w-4 h-4" />}
                             </Button>
-                        </SharePopover>
+                            <SharePopover boardId={activeBoard.id}>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all shrink-0"
+                                >
+                                    <Share2 className="w-4 h-4" />
+                                </Button>
+                            </SharePopover>
+                        </>
                     )}
 
                     {!isEditing && (

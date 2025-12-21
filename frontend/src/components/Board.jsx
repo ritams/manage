@@ -21,6 +21,7 @@ import { Plus } from "lucide-react";
 
 import { useBoardData } from "../hooks/useBoardData";
 import { useBoardDrag } from "../hooks/useBoardDrag";
+import { useGesture } from "@use-gesture/react";
 
 export default function Board({ user, onLogout }) {
     const {
@@ -46,6 +47,18 @@ export default function Board({ user, onLogout }) {
         createTag,
         deleteTag
     } = useBoardData();
+
+    const [isZoomedOut, setIsZoomedOut] = useState(false);
+
+    // Pinch Gesture Handler
+    const bind = useGesture({
+        onPinch: ({ direction: [d] }) => {
+            if (d < 0 && !isZoomedOut) setIsZoomedOut(true); // Pinch In -> Zoom Out
+            if (d > 0 && isZoomedOut) setIsZoomedOut(false); // Pinch Out -> Zoom In
+        },
+    }, {
+        pinch: { scaleBounds: { min: 0.5, max: 2 }, rubberband: true },
+    });
 
     const {
         sensors,
@@ -93,6 +106,8 @@ export default function Board({ user, onLogout }) {
                 onSwitchBoard={switchBoard}
                 onCreateBoard={createBoard}
                 onUpdateBoard={updateBoard}
+                isZoomedOut={isZoomedOut}
+                onToggleZoom={() => setIsZoomedOut(!isZoomedOut)}
             />
 
             <DndContext
@@ -114,9 +129,14 @@ export default function Board({ user, onLogout }) {
                     },
                 }}
             >
-                <div className="flex-1 overflow-x-auto overflow-y-auto p-6 sm:p-10">
+                <div
+                    {...bind()}
+                    className="flex-1 overflow-x-auto overflow-y-auto p-6 sm:p-10 touch-pan-x touch-pan-y"
+                >
                     <SortableContext items={lists.map(l => formatListId(l.id))} strategy={horizontalListSortingStrategy}>
-                        <div className="flex gap-4 sm:gap-8 items-start pb-10 snap-x snap-mandatory h-full">
+                        <div
+                            className={`flex gap-4 sm:gap-8 items-start pb-10 snap-x snap-mandatory h-full transition-transform duration-300 origin-top-left ${isZoomedOut ? 'scale-70 w-[142%]' : 'scale-100 w-full'}`}
+                        >
                             {lists.map((list) => (
                                 <List
                                     key={list.id}
