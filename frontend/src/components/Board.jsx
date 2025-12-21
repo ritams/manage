@@ -135,7 +135,7 @@ export default function Board({ user, onLogout }) {
                 >
                     <SortableContext items={lists.map(l => formatListId(l.id))} strategy={horizontalListSortingStrategy}>
                         <div
-                            className={`flex gap-4 sm:gap-8 items-start pb-10 snap-x snap-mandatory h-full transition-transform duration-300 origin-top-left ${isZoomedOut ? 'scale-70 w-[142%]' : 'scale-100 w-full'}`}
+                            className={`flex gap-4 sm:gap-8 items-start pb-24 snap-x snap-mandatory h-full transition-transform duration-300 origin-top-left ${isZoomedOut ? 'scale-70 w-[142%]' : 'scale-100 w-full'}`}
                         >
                             {lists.map((list) => (
                                 <List
