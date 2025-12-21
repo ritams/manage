@@ -1,7 +1,7 @@
 import { useDraggable } from "@dnd-kit/core";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Plus, Settings2, X, Trash2 } from "lucide-react";
+import { Plus, Settings2, X, Trash2, Tag, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import {
     Dialog,
@@ -37,6 +37,7 @@ function DraggableTag({ tag }) {
 
 export default function TagDock({ tags, onCreateTag, onDeleteTag }) {
     const [isManaging, setIsManaging] = useState(false);
+    const [isExpanded, setIsExpanded] = useState(false);
     const [newName, setNewName] = useState("");
     const [newColor, setNewColor] = useState("#3b82f6");
 
@@ -53,8 +54,25 @@ export default function TagDock({ tags, onCreateTag, onDeleteTag }) {
     };
 
     return (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50">
-            <div className="bg-card/40 backdrop-blur-2xl border border-border/40 p-2 rounded-[2rem] shadow-2xl flex items-center gap-3 max-w-[90vw] overflow-x-auto no-scrollbar ring-1 ring-border/10">
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-3 transition-all duration-300">
+            {/* Mobile Toggle Button */}
+            <div className={`md:hidden transition-all duration-300 ${isExpanded ? 'translate-y-0' : 'translate-y-8'}`}>
+                <Button
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    size="sm"
+                    className="rounded-full shadow-2xl bg-card/80 backdrop-blur-xl border border-primary/20 text-primary hover:bg-card h-10 px-6 font-bold"
+                >
+                    {isExpanded ? <ChevronDown className="w-4 h-4 mr-2" /> : <Tag className="w-4 h-4 mr-2" />}
+                    {isExpanded ? "Hide Tags" : "Tags"}
+                </Button>
+            </div>
+
+            {/* Dock Content */}
+            <div className={`
+                bg-card/40 backdrop-blur-2xl border border-border/40 p-2 rounded-[2rem] shadow-2xl items-center gap-3 max-w-[90vw] overflow-x-auto no-scrollbar ring-1 ring-border/10 transition-all duration-500 origin-bottom
+                ${isExpanded ? 'flex opacity-100 scale-100 translate-y-0' : 'hidden opacity-0 scale-95 translate-y-10'}
+                md:flex md:opacity-100 md:scale-100 md:translate-y-0
+            `}>
                 <div className="flex items-center gap-2 px-2 overflow-x-auto no-scrollbar">
                     {tags.map(tag => (
                         <DraggableTag key={tag.id} tag={tag} />
