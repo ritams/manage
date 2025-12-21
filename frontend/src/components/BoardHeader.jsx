@@ -88,25 +88,15 @@ export default function BoardHeader({ user, onLogout, boards = [], activeBoard, 
                     </div>
 
                     {!isEditing && activeBoard && (
-                        <>
+                        <SharePopover boardId={activeBoard.id}>
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                onClick={onToggleZoom}
-                                className="h-8 w-8 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all shrink-0 md:hidden"
+                                className="h-8 w-8 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all shrink-0"
                             >
-                                {isZoomedOut ? <ZoomIn className="w-4 h-4" /> : <ZoomOut className="w-4 h-4" />}
+                                <Share2 className="w-4 h-4" />
                             </Button>
-                            <SharePopover boardId={activeBoard.id}>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all shrink-0"
-                                >
-                                    <Share2 className="w-4 h-4" />
-                                </Button>
-                            </SharePopover>
-                        </>
+                        </SharePopover>
                     )}
 
                     {!isEditing && (

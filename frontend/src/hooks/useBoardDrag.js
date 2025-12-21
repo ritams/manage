@@ -22,8 +22,8 @@ export function useBoardDrag(lists, setLists, reorderLists, moveCard, reorderCar
         }),
         useSensor(TouchSensor, {
             activationConstraint: {
-                delay: 250,
-                tolerance: 5,
+                delay: 150,
+                tolerance: 8,
             },
         }),
         useSensor(KeyboardSensor, {

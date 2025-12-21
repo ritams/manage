@@ -95,17 +95,18 @@ export default function Card({ card, onDelete, onUpdate, onRemoveTag }) {
                                         onPointerDown={(e) => e.stopPropagation()}
                                         onClick={(e) => e.stopPropagation()}
                                     >
-                                        <Badge
-                                            className="px-2 py-0.5 rounded-full text-[10px] font-bold border-none shadow-sm transition-all whitespace-nowrap"
-                                            style={{ backgroundColor: tag.color, color: '#fff' }}
+                                        <div
+                                            className="flex items-center gap-1.5 pl-2 pr-2 py-0.5 rounded-full border shadow-sm transition-all"
+                                            style={{ backgroundColor: `${tag.color}20`, borderColor: `${tag.color}40` }}
                                         >
-                                            {tag.name}
-                                        </Badge>
+                                            <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: tag.color }} />
+                                            <span className="text-[10px] font-bold" style={{ color: tag.color }}>{tag.name}</span>
+                                        </div>
                                         <button
-                                            className="absolute -right-1 -top-1 w-3.5 h-3.5 bg-zinc-900 rounded-full flex items-center justify-center opacity-0 group-hover/tag:opacity-100 transition-opacity hover:bg-zinc-800"
+                                            className="absolute -right-1.5 -top-1.5 w-4 h-4 bg-background border border-border rounded-full flex items-center justify-center opacity-0 group-hover/tag:opacity-100 transition-all hover:bg-destructive hover:border-destructive group/del shadow-sm z-10"
                                             onClick={() => onRemoveTag && onRemoveTag(card.id, tag.id)}
                                         >
-                                            <X className="w-2.5 h-2.5 text-white" />
+                                            <X className="w-2.5 h-2.5 text-muted-foreground group-hover/del:text-white" />
                                         </button>
                                     </div>
                                 ))}

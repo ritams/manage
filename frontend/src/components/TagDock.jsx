@@ -25,12 +25,13 @@ function DraggableTag({ tag }) {
 
     return (
         <div ref={setNodeRef} style={style} {...listeners} {...attributes} className="cursor-grab active:cursor-grabbing">
-            <Badge
-                className="px-3 py-1.5 rounded-full text-xs font-bold border-none shadow-sm hover:shadow-md transition-all whitespace-nowrap"
-                style={{ backgroundColor: tag.color, color: '#fff' }}
+            <div
+                className="flex items-center gap-1.5 pl-2.5 pr-2.5 py-1 rounded-full border shadow-sm transition-all hover:scale-105"
+                style={{ backgroundColor: `${tag.color}20`, borderColor: `${tag.color}40` }}
             >
-                {tag.name}
-            </Badge>
+                <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: tag.color }} />
+                <span className="text-xs font-bold" style={{ color: tag.color }}>{tag.name}</span>
+            </div>
         </div>
     );
 }
@@ -94,7 +95,10 @@ export default function TagDock({ tags, onCreateTag, onDeleteTag }) {
                             <Settings2 className="h-4 w-4" />
                         </Button>
                     </DialogTrigger>
-                    <DialogContent className="rounded-3xl border-border/40 bg-card/95 backdrop-blur-xl text-foreground w-[95vw] max-w-sm p-6">
+                    <DialogContent
+                        className="rounded-3xl border-border/40 bg-card/95 backdrop-blur-xl text-foreground w-[95vw] max-w-sm p-6 !data-[state=open]:!slide-in-from-top-0 !data-[state=closed]:!slide-out-to-top-0"
+                        style={{ '--tw-enter-translate-y': '20%', '--tw-exit-translate-y': '20%', '--tw-enter-translate-x': '0%', '--tw-exit-translate-x': '0%' }}
+                    >
                         <DialogHeader>
                             <DialogTitle className="text-xl font-bold font-heading">Manage Tags</DialogTitle>
                         </DialogHeader>
