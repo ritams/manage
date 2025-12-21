@@ -69,7 +69,7 @@ export default function TagDock({ tags, onCreateTag, onDeleteTag }) {
 
             {/* Dock Content */}
             <div className={`
-                bg-card/40 backdrop-blur-2xl border border-border/40 p-3 rounded-[2rem] shadow-2xl items-center gap-3 max-w-[90vw] overflow-x-auto no-scrollbar ring-1 ring-border/10 transition-all duration-500 origin-bottom
+                bg-card/40 backdrop-blur-2xl border border-border/40 p-4 rounded-[2rem] shadow-2xl items-center gap-3 max-w-[90vw] overflow-x-auto no-scrollbar ring-1 ring-border/10 transition-all duration-500 origin-bottom
                 ${isExpanded ? 'flex opacity-100 scale-100 translate-y-0' : 'hidden opacity-0 scale-95 translate-y-10'}
                 md:flex md:opacity-100 md:scale-100 md:translate-y-0
             `}>
