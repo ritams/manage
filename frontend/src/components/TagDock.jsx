@@ -30,7 +30,7 @@ function DraggableTag({ tag }) {
                 style={{ backgroundColor: `${tag.color}20`, borderColor: `${tag.color}40` }}
             >
                 <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: tag.color }} />
-                <span className="text-xs font-bold" style={{ color: tag.color }}>{tag.name}</span>
+                <span className="text-xs font-bold whitespace-nowrap" style={{ color: tag.color }}>{tag.name}</span>
             </div>
         </div>
     );
