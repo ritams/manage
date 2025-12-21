@@ -169,7 +169,7 @@ export default function BoardHeader({ user, onLogout, boards = [], activeBoard, 
                                 )}
 
                                 {/* Board List */}
-                                <div className="p-2 max-h-64 overflow-y-auto">
+                                <div className="p-2 max-h-64 overflow-y-auto scrollbar-thin">
                                     <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-2 py-1.5 mb-1">
                                         Your Boards
                                     </div>

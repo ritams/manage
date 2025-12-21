@@ -79,7 +79,7 @@ export default function SharePopover({ boardId, children }) {
 
                 <div className="space-y-3">
                     <h3 className="font-semibold text-[10px] text-muted-foreground uppercase tracking-wider">Members</h3>
-                    <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
+                    <div className="space-y-1 max-h-48 overflow-y-auto pr-1 scrollbar-thin">
                         {members.map(m => (
                             <div key={m.id} className="flex justify-between items-center p-2 hover:bg-muted/50 rounded-lg transition-colors group">
                                 <div className="flex flex-col overflow-hidden mr-2">

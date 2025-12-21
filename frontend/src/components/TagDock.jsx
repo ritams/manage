@@ -69,11 +69,11 @@ export default function TagDock({ tags, onCreateTag, onDeleteTag }) {
 
             {/* Dock Content */}
             <div className={`
-                bg-card/40 backdrop-blur-2xl border border-border/40 p-2 rounded-[2rem] shadow-2xl items-center gap-3 max-w-[90vw] overflow-x-auto no-scrollbar ring-1 ring-border/10 transition-all duration-500 origin-bottom
+                bg-card/40 backdrop-blur-2xl border border-border/40 p-2 rounded-[2rem] shadow-2xl items-center gap-3 max-w-[90vw] overflow-x-auto scrollbar-hidden ring-1 ring-border/10 transition-all duration-500 origin-bottom
                 ${isExpanded ? 'flex opacity-100 scale-100 translate-y-0' : 'hidden opacity-0 scale-95 translate-y-10'}
                 md:flex md:opacity-100 md:scale-100 md:translate-y-0
             `}>
-                <div className="flex items-center gap-2 px-2 overflow-x-auto no-scrollbar">
+                <div className="flex items-center gap-2 px-2 overflow-x-auto scrollbar-hidden">
                     {tags.map(tag => (
                         <DraggableTag key={tag.id} tag={tag} />
                     ))}
@@ -104,7 +104,7 @@ export default function TagDock({ tags, onCreateTag, onDeleteTag }) {
 
                         <div className="space-y-6 mt-2">
                             {/* Existing Tags List - Minimal & Fluid */}
-                            <div className="flex flex-wrap gap-2 max-h-[30vh] overflow-y-auto pr-1 no-scrollbar p-1">
+                            <div className="flex flex-wrap gap-2 max-h-[30vh] overflow-y-auto pr-1 scrollbar-thin p-1">
                                 {tags.length === 0 ? (
                                     <div className="w-full text-center py-4 text-muted-foreground italic text-sm">No tags yet.</div>
                                 ) : (
