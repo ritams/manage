@@ -3,18 +3,29 @@ import ThemeToggle from "./ThemeToggle";
 import SharePopover from "./ShareModal";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { LogOut, User, Settings, Check, Plus, Share2, ChevronDown, Search, X, LayoutGrid } from "lucide-react";
+import { LogOut, User, Settings, Check, Plus, Share2, ChevronDown, Search, X, LayoutGrid, Trash2 } from "lucide-react";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { cn } from "@/lib/utils";
 
-export default function BoardHeader({ user, onLogout, boards = [], activeBoard, onSwitchBoard, onCreateBoard, onUpdateBoard, isZoomedOut, onToggleZoom }) {
+export default function BoardHeader({ user, onLogout, boards = [], activeBoard, onSwitchBoard, onCreateBoard, onUpdateBoard, onDeleteBoard, isZoomedOut, onToggleZoom }) {
     const [newBoardName, setNewBoardName] = useState("");
     const [isEditing, setIsEditing] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
     const [editName, setEditName] = useState(activeBoard?.name || "");
     const [isBoardPickerOpen, setIsBoardPickerOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
+    const [deletingBoard, setDeletingBoard] = useState(null);
     const searchInputRef = useRef(null);
 
     useEffect(() => {
@@ -75,6 +86,18 @@ export default function BoardHeader({ user, onLogout, boards = [], activeBoard, 
         if (onCreateBoard) {
             await onCreateBoard(name);
         }
+    };
+
+    const handleDeleteBoard = async (e, board) => {
+        e.stopPropagation();
+        setDeletingBoard(board);
+    };
+
+    const confirmDeleteBoard = async () => {
+        if (deletingBoard && onDeleteBoard) {
+            await onDeleteBoard(deletingBoard.id);
+        }
+        setDeletingBoard(null);
     };
 
     return (
@@ -157,35 +180,68 @@ export default function BoardHeader({ user, onLogout, boards = [], activeBoard, 
                                     ) : (
                                         <div className="space-y-0.5">
                                             {filteredBoards.map(board => (
-                                                <button
+                                                <div
                                                     key={board.id}
-                                                    onClick={() => handleSwitchBoard(board.id)}
-                                                    onDoubleClick={() => {
-                                                        setIsBoardPickerOpen(false);
-                                                        setTimeout(() => setIsEditing(true), 100);
-                                                    }}
                                                     className={cn(
                                                         "w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium cursor-pointer transition-all group",
                                                         board.id === activeBoard?.id
                                                             ? "bg-primary/10 text-primary"
                                                             : "text-foreground/80 hover:bg-muted/50"
                                                     )}
+                                                    onClick={() => handleSwitchBoard(board.id)}
+                                                    onDoubleClick={() => {
+                                                        setIsBoardPickerOpen(false);
+                                                        setTimeout(() => setIsEditing(true), 100);
+                                                    }}
                                                 >
-                                                    <div className="flex items-center gap-2 min-w-0">
+                                                    <div className="flex items-center gap-2 min-w-0 flex-1">
                                                         <div className={cn(
                                                             "w-2 h-2 rounded-full shrink-0",
                                                             board.id === activeBoard?.id ? "bg-primary" : "bg-muted-foreground/30"
                                                         )} />
                                                         <span className="truncate">{board.name || 'Untitled'}</span>
                                                     </div>
-                                                    {board.id === activeBoard?.id && (
-                                                        <Check className="w-4 h-4 shrink-0" />
-                                                    )}
-                                                </button>
+                                                    <div className="flex items-center gap-1 shrink-0">
+                                                        {board.id === activeBoard?.id && (
+                                                            <Check className="w-4 h-4" />
+                                                        )}
+                                                        {/* Delete button - only show if more than 1 board */}
+                                                        {boards.length > 1 && (
+                                                            <button
+                                                                onClick={(e) => handleDeleteBoard(e, board)}
+                                                                className="w-6 h-6 rounded-md flex items-center justify-center transition-all ml-1 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"
+                                                                title="Delete board"
+                                                            >
+                                                                <Trash2 className="w-3.5 h-3.5" />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
                                             ))}
                                         </div>
                                     )}
                                 </div>
+
+                                {/* Delete Confirmation Dialog */}
+                                <AlertDialog open={!!deletingBoard} onOpenChange={(open) => !open && setDeletingBoard(null)}>
+                                    <AlertDialogContent className="rounded-2xl">
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Delete this board?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                This will permanently remove "{deletingBoard?.name}" and all its collections and tasks. This action cannot be undone.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel className="rounded-xl font-bold">Nevermind</AlertDialogCancel>
+                                            <AlertDialogAction
+                                                onClick={confirmDeleteBoard}
+                                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl font-bold"
+                                            >
+                                                Delete Everything
+                                            </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
 
                                 {/* Create Board Section */}
                                 <div className="border-t border-border/30 p-2">
@@ -236,39 +292,44 @@ export default function BoardHeader({ user, onLogout, boards = [], activeBoard, 
                                     <span>Double-click board to rename</span>
                                 </div>
                             </PopoverContent>
-                        </Popover>
-                    )}
+                        </Popover >
+                    )
+                    }
 
                     {/* Quick Create Button - Desktop only */}
-                    {!isEditing && (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={handleQuickCreate}
-                            className="hidden sm:flex h-8 px-2.5 gap-1 rounded-lg text-xs font-medium text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors"
-                        >
-                            <Plus className="w-3.5 h-3.5" />
-                            <span className="hidden md:inline">New</span>
-                        </Button>
-                    )}
+                    {
+                        !isEditing && (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={handleQuickCreate}
+                                className="hidden sm:flex h-8 px-2.5 gap-1 rounded-lg text-xs font-medium text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors"
+                            >
+                                <Plus className="w-3.5 h-3.5" />
+                                <span className="hidden md:inline">New</span>
+                            </Button>
+                        )
+                    }
 
                     {/* Share Button */}
-                    {!isEditing && activeBoard && (
-                        <>
-                            <div className="hidden sm:block h-5 w-px bg-border/40 mx-0.5" />
-                            <SharePopover boardId={activeBoard.id}>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all shrink-0"
-                                >
-                                    <Share2 className="w-4 h-4" />
-                                </Button>
-                            </SharePopover>
-                        </>
-                    )}
-                </div>
-            </div>
+                    {
+                        !isEditing && activeBoard && (
+                            <>
+                                <div className="hidden sm:block h-5 w-px bg-border/40 mx-0.5" />
+                                <SharePopover boardId={activeBoard.id}>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all shrink-0"
+                                    >
+                                        <Share2 className="w-4 h-4" />
+                                    </Button>
+                                </SharePopover>
+                            </>
+                        )
+                    }
+                </div >
+            </div >
 
             {/* Right side actions */}
             <div className="flex items-center gap-2 sm:gap-3">
@@ -311,7 +372,7 @@ export default function BoardHeader({ user, onLogout, boards = [], activeBoard, 
                         </div>
                     </PopoverContent>
                 </Popover>
-            </div>
-        </header>
+            </div >
+        </header >
     );
 }

@@ -30,6 +30,7 @@ export default function Board({ user, onLogout }) {
         switchBoard,
         createBoard,
         updateBoard,
+        deleteBoard,
         lists,
         setLists, // Needed for drag hook updates
         createList,
@@ -106,6 +107,7 @@ export default function Board({ user, onLogout }) {
                 onSwitchBoard={switchBoard}
                 onCreateBoard={createBoard}
                 onUpdateBoard={updateBoard}
+                onDeleteBoard={deleteBoard}
                 isZoomedOut={isZoomedOut}
                 onToggleZoom={() => setIsZoomedOut(!isZoomedOut)}
             />

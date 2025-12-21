@@ -123,6 +123,37 @@ export function useBoardData() {
         }
     };
 
+    const deleteBoard = async (id) => {
+        // Don't allow deleting the last board
+        if (boards.length <= 1) {
+            console.warn("[useBoardData] Cannot delete the last board");
+            return false;
+        }
+
+        try {
+            await api.boards.delete(id);
+
+            // Remove from local state
+            const remainingBoards = boards.filter(b => b.id !== id);
+            setBoards(remainingBoards);
+
+            // If we deleted the active board, switch to another
+            if (activeBoard && activeBoard.id === id) {
+                const nextBoard = remainingBoards[0];
+                if (nextBoard) {
+                    setActiveBoard(nextBoard);
+                    const listsData = await api.lists.get(nextBoard.id);
+                    setLists(listsData);
+                    localStorage.setItem("lastBoardId", nextBoard.id);
+                }
+            }
+
+            return true;
+        } catch (err) {
+            console.error("[useBoardData] deleteBoard error:", err);
+            return false;
+        }
+    };
 
     const createList = async (title) => {
         if (!title.trim() || !activeBoard) return;
@@ -336,6 +367,7 @@ export function useBoardData() {
         switchBoard,
         createBoard,
         updateBoard,
+        deleteBoard,
         lists,
         setLists,
         loading,
