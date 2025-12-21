@@ -167,3 +167,37 @@ export const reorderCards = async (req, res) => {
     getIO().to(`board_${boardId}`).emit('BOARD_UPDATED');
     res.json({ ok: true });
 };
+
+// Set or clear due date for a card
+export const setDueDate = async (req, res) => {
+    const { id } = req.params;
+    const { dueDate } = req.body;
+
+    const boardId = await getBoardIdFromCard(id);
+    if (!boardId) {
+        res.status(404);
+        throw new Error("Card not found");
+    }
+
+    if (!await checkBoardAccess(req.user.id, boardId)) {
+        res.status(403);
+        throw new Error("Unauthorized");
+    }
+
+    // If dueDate is null/undefined, clear it; otherwise set it
+    // Also reset notification_sent so user gets notified again if date changes
+    if (dueDate) {
+        await db.run(
+            "UPDATE cards SET due_date = ?, notification_sent = 0 WHERE id = ?",
+            [dueDate, id]
+        );
+    } else {
+        await db.run(
+            "UPDATE cards SET due_date = NULL, notification_sent = 0 WHERE id = ?",
+            [id]
+        );
+    }
+
+    getIO().to(`board_${boardId}`).emit('BOARD_UPDATED');
+    res.json({ ok: true });
+};

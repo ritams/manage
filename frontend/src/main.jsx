@@ -4,11 +4,15 @@ import './index.css'
 import App from './App.jsx'
 
 import { SocketProvider } from './context/SocketProvider.jsx'
+import { ToastProvider } from './components/ToastProvider.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <SocketProvider>
-      <App />
+      <ToastProvider>
+        <App />
+      </ToastProvider>
     </SocketProvider>
   </StrictMode>,
 )
+

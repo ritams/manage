@@ -19,7 +19,7 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-export default function List({ list, onAddCard, onDeleteList, onUpdateList, onDeleteCard, onUpdateCard, onRemoveTag, isOverlay }) {
+export default function List({ list, onAddCard, onDeleteList, onUpdateList, onDeleteCard, onUpdateCard, onRemoveTag, onSetDueDate, isOverlay }) {
     const {
         setNodeRef,
         setActivatorNodeRef,
@@ -171,6 +171,7 @@ export default function List({ list, onAddCard, onDeleteList, onUpdateList, onDe
                                 onDelete={() => onDeleteCard(card.id)}
                                 onUpdate={(text) => onUpdateCard(card.id, text)}
                                 onRemoveTag={onRemoveTag}
+                                onSetDueDate={onSetDueDate}
                             />
                         ))}
                     </SortableContext>

@@ -45,6 +45,7 @@ export default function Board({ user, onLogout }) {
         tags,
         addTagToCard,
         removeTagFromCard,
+        setCardDueDate,
         createTag,
         deleteTag
     } = useBoardData();
@@ -149,6 +150,7 @@ export default function Board({ user, onLogout }) {
                                     onDeleteCard={deleteCard}
                                     onUpdateCard={updateCard}
                                     onRemoveTag={removeTagFromCard}
+                                    onSetDueDate={setCardDueDate}
                                 />
                             ))}
 

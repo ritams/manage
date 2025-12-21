@@ -48,11 +48,22 @@ export const api = {
         move: (cardId, listId) => fetchWithAuth("/cards/move", { method: "POST", body: JSON.stringify({ cardId, listId }) }),
         addTag: (cardId, tagId) => fetchWithAuth("/tags/cards", { method: "POST", body: JSON.stringify({ cardId, tagId }) }),
         removeTag: (cardId, tagId) => fetchWithAuth(`/tags/cards/${cardId}/tags/${tagId}`, { method: "DELETE" }),
+        setDueDate: (id, dueDate) => fetchWithAuth(`/cards/${id}/due`, { method: "PUT", body: JSON.stringify({ dueDate }) }),
     },
     tags: {
         get: () => fetchWithAuth("/tags"),
         create: (name, color) => fetchWithAuth("/tags", { method: "POST", body: JSON.stringify({ name, color }) }),
         update: (id, name, color) => fetchWithAuth(`/tags/${id}`, { method: "PUT", body: JSON.stringify({ name, color }) }),
         delete: (id) => fetchWithAuth(`/tags/${id}`, { method: "DELETE" }),
+    },
+    notifications: {
+        get: () => fetchWithAuth("/notifications"),
+        getUnreadCount: () => fetchWithAuth("/notifications/unread-count"),
+        markRead: (id) => fetchWithAuth(`/notifications/${id}/read`, { method: "PUT" }),
+        markAllRead: () => fetchWithAuth("/notifications/read-all", { method: "PUT" }),
+    },
+    push: {
+        subscribe: (subscription) => fetchWithAuth("/notifications/push/subscribe", { method: "POST", body: JSON.stringify({ subscription }) }),
+        unsubscribe: (endpoint) => fetchWithAuth("/notifications/push/unsubscribe", { method: "DELETE", body: JSON.stringify({ endpoint }) }),
     },
 };

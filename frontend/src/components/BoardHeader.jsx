@@ -17,6 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { cn } from "@/lib/utils";
+import NotificationBell from "./NotificationBell";
 
 export default function BoardHeader({ user, onLogout, boards = [], activeBoard, onSwitchBoard, onCreateBoard, onUpdateBoard, onDeleteBoard, isZoomedOut, onToggleZoom }) {
     const [newBoardName, setNewBoardName] = useState("");
@@ -333,6 +334,7 @@ export default function BoardHeader({ user, onLogout, boards = [], activeBoard, 
 
             {/* Right side actions */}
             <div className="flex items-center gap-2 sm:gap-3">
+                <NotificationBell onNavigateToBoard={onSwitchBoard} />
                 <ThemeToggle />
                 <Popover>
                     <PopoverTrigger asChild>

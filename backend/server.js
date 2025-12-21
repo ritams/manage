@@ -16,7 +16,9 @@ import boardRoutes from "./routes/boardRoutes.js";
 import listRoutes from "./routes/listRoutes.js";
 import cardRoutes from "./routes/cardRoutes.js";
 import tagRoutes from "./routes/tagRoutes.js";
+import notificationRoutes from "./routes/notificationRoutes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
+import { initReminderService } from "./services/reminderService.js";
 
 import helmet from "helmet";
 
@@ -68,6 +70,7 @@ mountRoutes("/boards", boardRoutes);
 mountRoutes("/lists", listRoutes);
 mountRoutes("/cards", cardRoutes);
 mountRoutes("/tags", tagRoutes);
+mountRoutes("/notifications", notificationRoutes);
 
 import adminRoutes from "./routes/adminRoutes.js";
 mountRoutes("/admin", adminRoutes);
@@ -81,6 +84,8 @@ app.use(errorHandler);
 const httpServer = createServer(app);
 initSocket(httpServer);
 
-httpServer.listen(PORT, () =>
-    console.log(`Server running on http://localhost:${PORT}`)
-);
+httpServer.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+    // Start the reminder service after server is listening
+    initReminderService();
+});

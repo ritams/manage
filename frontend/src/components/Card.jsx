@@ -3,8 +3,8 @@ import { CSS } from "@dnd-kit/utilities";
 import { Badge } from "@/components/ui/badge";
 import { Card as ShadcnCard, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, X, Check, MoreHorizontal, Trash } from "lucide-react";
-import { useState } from "react";
+import { Pencil, Trash2, X, Check, MoreHorizontal, Trash, Calendar, Clock } from "lucide-react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
@@ -18,8 +18,10 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
+import DateTimePicker from "./DateTimePicker";
 
-export default function Card({ card, onDelete, onUpdate, onRemoveTag }) {
+export default function Card({ card, onDelete, onUpdate, onRemoveTag, onSetDueDate }) {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
         id: `card-${card.id}`,
         data: { type: "Card", card }
@@ -33,6 +35,56 @@ export default function Card({ card, onDelete, onUpdate, onRemoveTag }) {
 
     const [isEditing, setIsEditing] = useState(false);
     const [text, setText] = useState(card.text);
+
+    // Get due date status
+    const [currentTime, setCurrentTime] = useState(new Date());
+
+    useEffect(() => {
+        if (!card.due_date) return;
+
+        // Update every 30 seconds to catch due times
+        const timer = setInterval(() => {
+            setCurrentTime(new Date());
+        }, 30000);
+
+        return () => clearInterval(timer);
+    }, [card.due_date]);
+
+    const getDueDateStatus = () => {
+        if (!card.due_date) return null;
+        const dueDate = new Date(card.due_date);
+        const now = currentTime; // Use state to trigger re-render
+        const diffMs = dueDate - now;
+        const diffHours = diffMs / (1000 * 60 * 60);
+
+        if (diffMs < 0) return 'overdue';
+        if (diffHours <= 24) return 'today';
+        if (diffHours <= 72) return 'soon';
+        return 'upcoming';
+    };
+
+    const dueDateStatus = getDueDateStatus();
+
+    const formatDueDate = (dateStr) => {
+        if (!dateStr) return '';
+        const date = new Date(dateStr);
+        const now = new Date();
+        const isToday = date.toDateString() === now.toDateString();
+        const tomorrow = new Date(now); tomorrow.setDate(tomorrow.getDate() + 1);
+        const isTomorrow = date.toDateString() === tomorrow.toDateString();
+
+        if (isToday) return `Today, ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+        if (isTomorrow) return `Tomorrow, ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+        return date.toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    };
+
+    const handleSetDueDate = (date) => {
+        if (onSetDueDate) {
+            // Convert Date object to ISO string format for storage
+            const dateStr = date ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}T${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}` : null;
+            onSetDueDate(card.id, dateStr);
+        }
+    };
 
     const handleSave = () => {
         setIsEditing(false);
@@ -112,6 +164,24 @@ export default function Card({ card, onDelete, onUpdate, onRemoveTag }) {
                             </div>
                         )}
                         <span className="flex-1">{card.text}</span>
+
+                        {/* Due Date Badge */}
+                        {card.due_date && (
+                            <div
+                                className={cn(
+                                    "flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold w-fit",
+                                    dueDateStatus === 'overdue' && "bg-red-100 text-red-600 dark:bg-red-950/50 dark:text-red-400",
+                                    dueDateStatus === 'today' && "bg-amber-100 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400",
+                                    dueDateStatus === 'soon' && "bg-blue-100 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400",
+                                    dueDateStatus === 'upcoming' && "bg-muted text-muted-foreground"
+                                )}
+                                onPointerDown={(e) => e.stopPropagation()}
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <Clock className="w-3 h-3" />
+                                <span>{formatDueDate(card.due_date)}</span>
+                            </div>
+                        )}
                     </div>
 
                     <div className="absolute top-2 right-2 opacity-100 md:opacity-0 md:group-hover/card:opacity-100 transition-all transform translate-x-0 md:translate-x-2 md:group-hover/card:translate-x-0 z-10">
@@ -127,7 +197,20 @@ export default function Card({ card, onDelete, onUpdate, onRemoveTag }) {
                                     <MoreHorizontal className="h-4 w-4" />
                                 </Button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-40 p-1 rounded-xl border-border/50 shadow-xl backdrop-blur-xl bg-card/90" align="end" onPointerDown={(e) => e.stopPropagation()}>
+                            <PopoverContent className="w-64 p-1.5 rounded-xl border-border/50 shadow-xl backdrop-blur-xl bg-card/90" align="end" onPointerDown={(e) => e.stopPropagation()}>
+                                {/* Due Date Section */}
+                                <div className="px-2 py-2 border-b border-border/30 mb-1">
+                                    <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Due Date</div>
+                                    <div onPointerDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
+                                        <DateTimePicker
+                                            selected={card.due_date ? new Date(card.due_date) : null}
+                                            onChange={handleSetDueDate}
+                                            placeholder="Pick date & time"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Delete Button */}
                                 <AlertDialog>
                                     <AlertDialogTrigger asChild>
                                         <Button

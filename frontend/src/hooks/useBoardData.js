@@ -333,6 +333,30 @@ export function useBoardData() {
         }
     };
 
+    const setCardDueDate = async (cardId, dueDate) => {
+        // Optimistic update
+        setLists(prev => prev.map(l => ({
+            ...l,
+            cards: l.cards.map(c => {
+                if (c.id === cardId) {
+                    return { ...c, due_date: dueDate, notification_sent: 0 };
+                }
+                return c;
+            })
+        })));
+
+        try {
+            await api.cards.setDueDate(cardId, dueDate);
+        } catch (err) {
+            console.error(err);
+            // Reload to rollback
+            if (activeBoard) {
+                const data = await api.lists.get(activeBoard.id);
+                setLists(data);
+            }
+        }
+    };
+
     const createTag = async (name, color) => {
         try {
             const newTag = await api.tags.create(name, color);
@@ -383,6 +407,7 @@ export function useBoardData() {
         tags,
         addTagToCard,
         removeTagFromCard,
+        setCardDueDate,
         createTag,
         deleteTag
     };

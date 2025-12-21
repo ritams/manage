@@ -3,6 +3,8 @@ import Login from "./components/Login";
 import Board from "./components/Board";
 import { api } from "./lib/api";
 
+import NotificationListener from "./components/NotificationListener";
+
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -35,7 +37,12 @@ function App() {
   if (loading) return <div className="flex items-center justify-center h-screen bg-background text-foreground">Loading...</div>;
 
   if (user) {
-    return <Board user={user} onLogout={handleLogout} />;
+    return (
+      <>
+        <NotificationListener user={user} />
+        <Board user={user} onLogout={handleLogout} />
+      </>
+    );
   }
 
   return (

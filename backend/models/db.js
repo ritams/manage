@@ -129,7 +129,41 @@ export const initDB = () => {
         // Add created_at to cards if missing
         db.run("ALTER TABLE cards ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP", (err) => { });
 
-        // 6. INDEXES for Performance
+        // 7. REMINDERS & NOTIFICATIONS SCHEMA
+        // Add due_date to cards
+        db.run("ALTER TABLE cards ADD COLUMN due_date DATETIME", (err) => { });
+        // Add notification_sent flag to cards
+        db.run("ALTER TABLE cards ADD COLUMN notification_sent INTEGER DEFAULT 0", (err) => { });
+
+        // Create notifications table for in-app notifications
+        db.run(`
+            CREATE TABLE IF NOT EXISTS notifications (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT,
+                card_id INTEGER,
+                board_id INTEGER,
+                message TEXT,
+                is_read INTEGER DEFAULT 0,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(user_id) REFERENCES users(id),
+                FOREIGN KEY(card_id) REFERENCES cards(id) ON DELETE CASCADE,
+                FOREIGN KEY(board_id) REFERENCES boards(id) ON DELETE CASCADE
+            )
+        `);
+
+        // Create push_subscriptions table for browser push notifications
+        db.run(`
+            CREATE TABLE IF NOT EXISTS push_subscriptions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT,
+                endpoint TEXT UNIQUE,
+                keys TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(user_id) REFERENCES users(id)
+            )
+        `);
+
+        // 8. INDEXES for Performance
         db.run("CREATE INDEX IF NOT EXISTS idx_lists_board_id ON lists(board_id)");
         db.run("CREATE INDEX IF NOT EXISTS idx_cards_list_id ON cards(list_id)");
         db.run("CREATE INDEX IF NOT EXISTS idx_card_tags_card_id ON card_tags(card_id)");
