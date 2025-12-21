@@ -51,16 +51,29 @@ export function useBoardData() {
         socket.emit('JOIN_BOARD', activeBoard.id);
 
         const handleUpdate = async () => {
-            console.log("Received BOARD_UPDATED, refreshing lists...");
-            const data = await api.lists.get(activeBoard.id);
-            setLists(data);
+            console.log("Received BOARD_UPDATED, scheduling refresh...");
+            // Simple debounce: cancel previous timeout if any ?? 
+            // Better: use a ref for timeout. For now, simple delay.
         };
 
-        socket.on('BOARD_UPDATED', handleUpdate);
+        let timeoutId;
+        const debouncedUpdate = () => {
+            if (timeoutId) clearTimeout(timeoutId);
+            timeoutId = setTimeout(async () => {
+                console.log("Executing debounced refresh...");
+                if (activeBoard) {
+                    const data = await api.lists.get(activeBoard.id);
+                    setLists(data);
+                }
+            }, 300); // 300ms debounce
+        };
+
+        socket.on('BOARD_UPDATED', debouncedUpdate);
 
         return () => {
             socket.emit('LEAVE_BOARD', activeBoard.id);
-            socket.off('BOARD_UPDATED', handleUpdate);
+            socket.off('BOARD_UPDATED', debouncedUpdate);
+            if (timeoutId) clearTimeout(timeoutId);
         };
     }, [socket, activeBoard?.id]);
 

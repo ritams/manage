@@ -71,10 +71,7 @@ export const getLists = async (req, res) => {
 
 export const createList = async (req, res) => {
     const { title, boardId } = req.body;
-    if (!title || typeof title !== 'string' || title.trim().length === 0) {
-        res.status(400);
-        throw new Error("Invalid title");
-    }
+    // Validation handled by middleware
     if (!boardId) {
         res.status(400);
         throw new Error("boardId required");
@@ -102,10 +99,7 @@ export const updateList = async (req, res) => {
     const { title } = req.body;
     const { id } = req.params;
 
-    if (!title || typeof title !== 'string' || title.trim().length === 0) {
-        res.status(400);
-        throw new Error("Invalid title");
-    }
+    // Validation handled by middleware
 
     // Get board_id to check access
     const list = await db.query("SELECT board_id FROM lists WHERE id=?", [id]);
@@ -150,23 +144,46 @@ export const reorderLists = async (req, res) => {
     const { listIds } = req.body;
     if (!listIds || listIds.length === 0) return res.json({ ok: true });
 
-    // Check access for the first list (assuming all belong to same board, which they should if UI works)
-    const list = await db.query("SELECT board_id FROM lists WHERE id=?", [listIds[0]]);
-    if (list.length) {
-        const boardId = list[0].board_id;
-        if (!await checkBoardAccess(req.user.id, boardId)) {
-            res.status(403);
-            throw new Error("Unauthorized");
-        }
-
-        await db.transaction(async () => {
-            for (let i = 0; i < listIds.length; i++) {
-                await db.run("UPDATE lists SET position=? WHERE id=?", [i, listIds[i]]);
-            }
-        });
-
-        getIO().to(`board_${boardId}`).emit('BOARD_UPDATED');
+    // Validate input format
+    if (!Array.isArray(listIds)) {
+        res.status(400);
+        throw new Error("listIds must be an array");
     }
 
+    // 1. Fetch board_id for ALL lists to ensure they all belong to the same board
+    // and that the user isn't mixing lists from different boards (or boards they don't own)
+    const placeholders = listIds.map(() => '?').join(',');
+    const lists = await db.query(
+        `SELECT id, board_id FROM lists WHERE id IN (${placeholders})`,
+        listIds
+    );
+
+    if (lists.length !== listIds.length) {
+        res.status(404);
+        throw new Error("One or more lists not found");
+    }
+
+    const boardId = lists[0].board_id;
+    const allSameBoard = lists.every(l => l.board_id === boardId);
+
+    if (!allSameBoard) {
+        res.status(400);
+        throw new Error("All lists must belong to the same board");
+    }
+
+    // 2. Check access to this board
+    if (!await checkBoardAccess(req.user.id, boardId)) {
+        res.status(403);
+        throw new Error("Unauthorized");
+    }
+
+    // 3. Update positions in transaction
+    await db.transaction(async () => {
+        for (let i = 0; i < listIds.length; i++) {
+            await db.run("UPDATE lists SET position=? WHERE id=?", [i, listIds[i]]);
+        }
+    });
+
+    getIO().to(`board_${boardId}`).emit('BOARD_UPDATED');
     res.json({ ok: true });
 };

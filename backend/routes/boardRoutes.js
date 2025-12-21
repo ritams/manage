@@ -15,14 +15,17 @@ const router = express.Router();
 
 router.use(authMiddleware);
 
+// Validation
+import { validate, schemas } from '../middleware/validate.js';
+
 router.get('/', asyncHandler(getBoards));
-router.post('/', asyncHandler(createBoard));
-router.put('/:id', asyncHandler(updateBoard));
+router.post('/', validate(schemas.createBoard), asyncHandler(createBoard));
+router.put('/:id', validate(schemas.updateBoard), asyncHandler(updateBoard));
 router.delete('/:id', asyncHandler(deleteBoard));
 
 // Member management
 router.get('/:id/members', asyncHandler(getMembers));
-router.post('/:id/members', asyncHandler(addMember));
+router.post('/:id/members', validate(schemas.addMember), asyncHandler(addMember));
 router.delete('/:id/members/:userId', asyncHandler(removeMember));
 
 export default router;

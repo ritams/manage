@@ -14,10 +14,13 @@ const router = express.Router();
 
 router.use(authMiddleware);
 
-router.post('/', asyncHandler(createCard));
-router.put('/reorder', asyncHandler(reorderCards));
-router.post('/move', asyncHandler(moveCard));
-router.put('/:id', asyncHandler(updateCard));
+// Validation
+import { validate, schemas } from '../middleware/validate.js';
+
+router.post('/', validate(schemas.createCard), asyncHandler(createCard));
+router.put('/reorder', asyncHandler(reorderCards)); // Custom array validation
+router.post('/move', validate(schemas.moveCard), asyncHandler(moveCard));
+router.put('/:id', validate(schemas.updateCard), asyncHandler(updateCard));
 router.put('/:id/due', asyncHandler(setDueDate));
 router.delete('/:id', asyncHandler(deleteCard));
 

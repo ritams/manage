@@ -59,21 +59,20 @@ app.use((req, res, next) => {
 
 /* ================== ROUTES ================== */
 
-// Helper to mount routes at both /api/X and /X
-const mountRoutes = (path, route) => {
-    app.use(`/api${path}`, route);
-    app.use(path, route);
-};
+/* ================== ROUTES ================== */
 
-mountRoutes("/auth", authRoutes);
-mountRoutes("/boards", boardRoutes);
-mountRoutes("/lists", listRoutes);
-mountRoutes("/cards", cardRoutes);
-mountRoutes("/tags", tagRoutes);
-mountRoutes("/notifications", notificationRoutes);
+const apiRouter = express.Router();
+apiRouter.use("/auth", authRoutes);
+apiRouter.use("/boards", boardRoutes);
+apiRouter.use("/lists", listRoutes);
+apiRouter.use("/cards", cardRoutes);
+apiRouter.use("/tags", tagRoutes);
+apiRouter.use("/notifications", notificationRoutes);
 
 import adminRoutes from "./routes/adminRoutes.js";
-mountRoutes("/admin", adminRoutes);
+apiRouter.use("/admin", adminRoutes);
+
+app.use("/api", apiRouter);
 
 import { createServer } from 'http';
 import { initSocket } from './socket.js';

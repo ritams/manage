@@ -13,10 +13,13 @@ const router = express.Router();
 
 router.use(authMiddleware);
 
+// Validation
+import { validate, schemas } from '../middleware/validate.js';
+
 router.get('/', asyncHandler(getLists));
-router.post('/', asyncHandler(createList));
-router.put('/reorder', asyncHandler(reorderLists));
-router.put('/:id', asyncHandler(updateList));
+router.post('/', validate(schemas.createList), asyncHandler(createList));
+router.put('/reorder', asyncHandler(reorderLists)); // reorderLists uses custom array validation
+router.put('/:id', validate(schemas.updateList), asyncHandler(updateList));
 router.delete('/:id', asyncHandler(deleteList));
 
 export default router;

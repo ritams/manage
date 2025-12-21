@@ -26,10 +26,7 @@ const getBoardIdFromCard = async (cardId) => {
 
 export const createCard = async (req, res) => {
     const { listId, text } = req.body;
-    if (!text || typeof text !== 'string' || text.trim().length === 0) {
-        res.status(400);
-        throw new Error("Invalid text");
-    }
+    // Validation handled by middleware
     if (text.length > 1000) {
         res.status(400);
         throw new Error("Text too long (max 1000 chars)");
@@ -59,10 +56,7 @@ export const updateCard = async (req, res) => {
     const { text } = req.body;
     const { id } = req.params;
 
-    if (!text || typeof text !== 'string' || text.trim().length === 0) {
-        res.status(400);
-        throw new Error("Invalid text");
-    }
+    // Validation handled by middleware
     if (text.length > 1000) {
         res.status(400);
         throw new Error("Text too long (max 1000 chars)");
@@ -147,17 +141,42 @@ export const reorderCards = async (req, res) => {
     const { cardIds } = req.body;
     if (!cardIds || cardIds.length === 0) return res.json({ ok: true });
 
-    const boardId = await getBoardIdFromCard(cardIds[0]);
-    if (!boardId) {
-        res.status(404);
-        throw new Error("Card not found");
+    // Validate input format
+    if (!Array.isArray(cardIds)) {
+        res.status(400);
+        throw new Error("cardIds must be an array");
     }
 
+    // 1. Fetch board_id for ALL cards
+    const placeholders = cardIds.map(() => '?').join(',');
+    const cards = await db.query(
+        `SELECT c.id, l.board_id 
+         FROM cards c 
+         JOIN lists l ON c.list_id = l.id 
+         WHERE c.id IN (${placeholders})`,
+        cardIds
+    );
+
+    if (cards.length !== cardIds.length) {
+        res.status(404);
+        throw new Error("One or more cards not found");
+    }
+
+    const boardId = cards[0].board_id;
+    const allSameBoard = cards.every(c => c.board_id === boardId);
+
+    if (!allSameBoard) {
+        res.status(400);
+        throw new Error("All cards must belong to the same board");
+    }
+
+    // 2. Check access to the board
     if (!await checkBoardAccess(req.user.id, boardId)) {
         res.status(403);
         throw new Error("Unauthorized");
     }
 
+    // 3. Execute updates in transaction
     await db.transaction(async () => {
         for (let i = 0; i < cardIds.length; i++) {
             await db.run("UPDATE cards SET position=? WHERE id=?", [i, cardIds[i]]);

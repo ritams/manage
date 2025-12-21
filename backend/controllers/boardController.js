@@ -18,10 +18,7 @@ export const getBoards = async (req, res) => {
 
 export const createBoard = async (req, res) => {
     const { name } = req.body;
-    if (!name || typeof name !== 'string' || name.trim().length === 0) {
-        res.status(400);
-        throw new Error("Invalid name");
-    }
+    // Validation handled by middleware
     const result = await db.run(
         "INSERT INTO boards (user_id, name) VALUES (?, ?)",
         [req.user.id, name]
@@ -33,10 +30,7 @@ export const updateBoard = async (req, res) => {
     const { name } = req.body;
     const { id } = req.params;
 
-    if (!name || typeof name !== 'string' || name.trim().length === 0) {
-        res.status(400);
-        throw new Error("Invalid name");
-    }
+    // Validation handled by middleware
 
     // Check access (Owner or Member)
     const access = await db.query(
