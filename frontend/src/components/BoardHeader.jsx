@@ -1,19 +1,11 @@
 import { Button } from "@/components/ui/button";
 import ThemeToggle from "./ThemeToggle";
-import SharePopover from "./ShareModal"; // It was renamed in content but file is still ShareModal.jsx
+import SharePopover from "./ShareModal";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { LogOut, User, Settings, Check, Plus, Share2, ZoomIn, ZoomOut } from "lucide-react";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { LogOut, User, Settings, Check, Plus, Share2, ChevronDown, Search, X, LayoutGrid } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { cn } from "@/lib/utils";
 
 export default function BoardHeader({ user, onLogout, boards = [], activeBoard, onSwitchBoard, onCreateBoard, onUpdateBoard, isZoomedOut, onToggleZoom }) {
@@ -21,12 +13,34 @@ export default function BoardHeader({ user, onLogout, boards = [], activeBoard, 
     const [isEditing, setIsEditing] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
     const [editName, setEditName] = useState(activeBoard?.name || "");
+    const [isBoardPickerOpen, setIsBoardPickerOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
+    const searchInputRef = useRef(null);
 
     useEffect(() => {
         if (activeBoard?.name) {
             setEditName(activeBoard.name);
         }
     }, [activeBoard]);
+
+    // Focus search when picker opens
+    useEffect(() => {
+        if (isBoardPickerOpen && searchInputRef.current && boards.length > 3) {
+            setTimeout(() => searchInputRef.current?.focus(), 100);
+        }
+        if (!isBoardPickerOpen) {
+            setSearchQuery("");
+            setIsCreating(false);
+        }
+    }, [isBoardPickerOpen, boards.length]);
+
+    // Filter boards by search
+    const filteredBoards = useMemo(() => {
+        if (!searchQuery.trim()) return boards;
+        return boards.filter(b =>
+            b.name?.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+    }, [boards, searchQuery]);
 
     const handleRename = async () => {
         if (!editName.trim() || editName === activeBoard?.name) {
@@ -43,154 +57,238 @@ export default function BoardHeader({ user, onLogout, boards = [], activeBoard, 
     const handleCreate = async (e) => {
         e.preventDefault();
         if (!newBoardName.trim()) return;
-
-        const name = newBoardName;
-        // API call
         if (onCreateBoard) {
-            await onCreateBoard(name);
+            await onCreateBoard(newBoardName);
         }
         setNewBoardName("");
         setIsCreating(false);
-        document.body.click();
+        setIsBoardPickerOpen(false);
+    };
+
+    const handleSwitchBoard = (boardId) => {
+        onSwitchBoard(boardId);
+        setIsBoardPickerOpen(false);
+    };
+
+    const handleQuickCreate = async () => {
+        const name = `Board ${boards.length + 1}`;
+        if (onCreateBoard) {
+            await onCreateBoard(name);
+        }
     };
 
     return (
-        <header className="border-b border-border/40 p-4 flex justify-between items-center bg-background/60 backdrop-blur-xl sticky top-0 z-50 px-4 sm:px-8 transition-all duration-300">
-            <div className="flex items-center gap-4">
-                <span className="hidden md:inline font-heading font-black text-3xl tracking-tighter text-primary">cardio</span>
-                <span className="inline md:hidden font-heading font-black text-3xl tracking-tighter text-primary">C</span>
+        <header className="border-b border-border/40 p-3 sm:p-4 flex justify-between items-center bg-background/60 backdrop-blur-xl sticky top-0 z-50 px-3 sm:px-8 transition-all duration-300">
+            <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+                {/* Logo */}
+                <span className="hidden md:inline font-heading font-black text-2xl tracking-tighter text-primary shrink-0">cardio</span>
+                <span className="inline md:hidden font-heading font-black text-2xl tracking-tighter text-primary shrink-0">C</span>
 
-                <div className="h-8 w-px bg-border/40" />
+                <div className="hidden sm:block h-6 w-px bg-border/40 shrink-0" />
 
-                <div className="flex items-center gap-2 md:gap-3">
-                    {/* Inline Board Name Edit */}
-                    <div className="group/board-title max-w-[120px] sm:max-w-xs md:max-w-md">
-                        {isEditing ? (
-                            <Input
-                                value={editName}
-                                onChange={(e) => setEditName(e.target.value)}
-                                onBlur={handleRename}
-                                onKeyDown={(e) => e.key === 'Enter' && handleRename()}
-                                autoFocus
-                                className="h-9 w-full text-lg md:text-xl font-medium px-2 bg-background/50 border-primary/30 focus-visible:ring-primary/20 rounded-lg"
-                            />
-                        ) : (
-                            <div
-                                className="text-lg md:text-xl font-medium font-heading text-foreground/90 cursor-pointer py-1 transition-colors flex items-center gap-2 hover:text-primary truncate"
-                                onClick={() => {
-                                    setEditName(activeBoard?.name || "");
-                                    setIsEditing(true);
-                                }}
+                <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+                    {/* Board Selector - New Pattern */}
+                    {isEditing ? (
+                        <Input
+                            value={editName}
+                            onChange={(e) => setEditName(e.target.value)}
+                            onBlur={handleRename}
+                            onKeyDown={(e) => e.key === 'Enter' && handleRename()}
+                            autoFocus
+                            className="h-8 sm:h-9 w-32 sm:w-48 text-sm sm:text-base font-medium px-2 bg-background/50 border-primary/30 focus-visible:ring-primary/20 rounded-lg"
+                        />
+                    ) : (
+                        <Popover open={isBoardPickerOpen} onOpenChange={setIsBoardPickerOpen}>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    className={cn(
+                                        "h-8 sm:h-9 px-2 sm:px-3 gap-1 sm:gap-1.5 text-sm sm:text-base font-medium rounded-xl transition-all max-w-[140px] sm:max-w-[200px]",
+                                        "hover:bg-primary/5 hover:text-primary",
+                                        isBoardPickerOpen && "bg-primary/10 text-primary"
+                                    )}
+                                >
+                                    <LayoutGrid className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary/70 shrink-0" />
+                                    <span className="truncate">{activeBoard?.name || 'Select Board'}</span>
+                                    <ChevronDown className={cn(
+                                        "w-3.5 h-3.5 text-muted-foreground transition-transform shrink-0",
+                                        isBoardPickerOpen && "rotate-180"
+                                    )} />
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent
+                                className="w-72 sm:w-80 p-0 rounded-2xl bg-card/98 backdrop-blur-2xl border-border/50 shadow-2xl overflow-hidden"
+                                align="start"
+                                sideOffset={8}
                             >
-                                <span className="truncate">{activeBoard?.name || 'Untitled Board'}</span>
-                            </div>
-                        )}
-                    </div>
+                                {/* Search Bar - Shows when 4+ boards */}
+                                {boards.length > 3 && (
+                                    <div className="p-2 border-b border-border/30">
+                                        <div className="relative">
+                                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                            <Input
+                                                ref={searchInputRef}
+                                                placeholder="Search boards..."
+                                                value={searchQuery}
+                                                onChange={(e) => setSearchQuery(e.target.value)}
+                                                className="pl-9 pr-8 h-9 text-sm bg-background/50 border-border/40 rounded-xl"
+                                            />
+                                            {searchQuery && (
+                                                <button
+                                                    onClick={() => setSearchQuery("")}
+                                                    className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full hover:bg-muted flex items-center justify-center"
+                                                >
+                                                    <X className="w-3 h-3" />
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
 
-                    {!isEditing && activeBoard && (
-                        <SharePopover boardId={activeBoard.id}>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all shrink-0"
-                            >
-                                <Share2 className="w-4 h-4" />
-                            </Button>
-                        </SharePopover>
+                                {/* Board List */}
+                                <div className="p-2 max-h-64 overflow-y-auto">
+                                    <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-2 py-1.5 mb-1">
+                                        Your Boards
+                                    </div>
+                                    {filteredBoards.length === 0 ? (
+                                        <div className="text-center py-6 text-sm text-muted-foreground">
+                                            No boards found
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-0.5">
+                                            {filteredBoards.map(board => (
+                                                <button
+                                                    key={board.id}
+                                                    onClick={() => handleSwitchBoard(board.id)}
+                                                    onDoubleClick={() => {
+                                                        setIsBoardPickerOpen(false);
+                                                        setTimeout(() => setIsEditing(true), 100);
+                                                    }}
+                                                    className={cn(
+                                                        "w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium cursor-pointer transition-all group",
+                                                        board.id === activeBoard?.id
+                                                            ? "bg-primary/10 text-primary"
+                                                            : "text-foreground/80 hover:bg-muted/50"
+                                                    )}
+                                                >
+                                                    <div className="flex items-center gap-2 min-w-0">
+                                                        <div className={cn(
+                                                            "w-2 h-2 rounded-full shrink-0",
+                                                            board.id === activeBoard?.id ? "bg-primary" : "bg-muted-foreground/30"
+                                                        )} />
+                                                        <span className="truncate">{board.name || 'Untitled'}</span>
+                                                    </div>
+                                                    {board.id === activeBoard?.id && (
+                                                        <Check className="w-4 h-4 shrink-0" />
+                                                    )}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Create Board Section */}
+                                <div className="border-t border-border/30 p-2">
+                                    {isCreating ? (
+                                        <form onSubmit={handleCreate} className="space-y-2 p-1">
+                                            <Input
+                                                autoFocus
+                                                placeholder="Board name..."
+                                                value={newBoardName}
+                                                onChange={(e) => setNewBoardName(e.target.value)}
+                                                onKeyDown={(e) => e.stopPropagation()}
+                                                className="h-9 text-sm bg-background/60 border-border/50 rounded-xl font-medium"
+                                            />
+                                            <div className="flex gap-2">
+                                                <Button
+                                                    type="submit"
+                                                    size="sm"
+                                                    className="h-8 text-xs bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 px-4 font-bold rounded-lg flex-1"
+                                                >
+                                                    Create
+                                                </Button>
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="h-8 px-3 text-xs font-medium rounded-lg"
+                                                    onClick={() => setIsCreating(false)}
+                                                >
+                                                    Cancel
+                                                </Button>
+                                            </div>
+                                        </form>
+                                    ) : (
+                                        <button
+                                            onClick={() => setIsCreating(true)}
+                                            className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors group"
+                                        >
+                                            <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                                                <Plus className="w-3 h-3 text-primary" />
+                                            </div>
+                                            <span>Create new board</span>
+                                        </button>
+                                    )}
+                                </div>
+
+                                {/* Keyboard hint - Desktop only */}
+                                <div className="hidden sm:flex items-center justify-center gap-1.5 py-2 border-t border-border/20 text-[10px] text-muted-foreground/60">
+                                    <span>Double-click board to rename</span>
+                                </div>
+                            </PopoverContent>
+                        </Popover>
                     )}
 
+                    {/* Quick Create Button - Desktop only */}
                     {!isEditing && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleQuickCreate}
+                            className="hidden sm:flex h-8 px-2.5 gap-1 rounded-lg text-xs font-medium text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors"
+                        >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span className="hidden md:inline">New</span>
+                        </Button>
+                    )}
+
+                    {/* Share Button */}
+                    {!isEditing && activeBoard && (
                         <>
-                            <div className="hidden sm:block h-5 w-px bg-border/60 mx-1" />
-
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-8 w-8 rounded-full bg-secondary/50 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all shrink-0"
-                                    >
-                                        <Plus className="w-4 h-4" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="start" className="w-64 p-2 rounded-2xl bg-card/95 backdrop-blur-xl border-border/50 shadow-xl">
-                                    <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground px-2 py-1.5 uppercase tracking-wider">
-                                        Your Boards
-                                    </DropdownMenuLabel>
-
-                                    {boards.map(board => (
-                                        <DropdownMenuItem
-                                            key={board.id}
-                                            onClick={() => onSwitchBoard(board.id)}
-                                            className={cn(
-                                                "flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium cursor-pointer transition-colors mb-1",
-                                                board.id === activeBoard?.id ? "bg-primary/10 text-primary" : "text-foreground/80 hover:bg-muted/50"
-                                            )}
-                                        >
-                                            <span className="truncate">{board.name || 'Untitled'}</span>
-                                            {board.id === activeBoard?.id && <Check className="w-4 h-4" />}
-                                        </DropdownMenuItem>
-                                    ))}
-
-                                    <DropdownMenuSeparator className="my-2 bg-border/40" />
-
-                                    <div className="pt-1">
-                                        {isCreating ? (
-                                            <form onSubmit={handleCreate} className="animate-in fade-in slide-in-from-top-2 duration-300 space-y-3 p-1">
-                                                <Input
-                                                    autoFocus
-                                                    placeholder="Board name..."
-                                                    value={newBoardName}
-                                                    onChange={(e) => setNewBoardName(e.target.value)}
-                                                    onKeyDown={(e) => e.stopPropagation()}
-                                                    className="bg-background/80 border-border/50 text-sm shadow-inner rounded-xl h-9 px-3 font-medium transition-all focus:border-primary/50"
-                                                />
-                                                <div className="flex items-center justify-between">
-                                                    <div className="flex gap-2">
-                                                        <Button type="submit" size="sm" className="h-7 text-[10px] bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 px-3 font-bold rounded-lg">Add Board</Button>
-                                                        <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-[10px] font-bold rounded-lg" onClick={(e) => { e.preventDefault(); setIsCreating(false); }}>Cancel</Button>
-                                                    </div>
-                                                </div>
-                                            </form>
-                                        ) : (
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="w-full justify-start text-muted-foreground hover:text-primary hover:bg-primary/5 h-9 text-xs font-bold rounded-xl border border-transparent hover:border-primary/10 transition-all group/add"
-                                                onClick={(e) => { e.preventDefault(); setIsCreating(true); }}
-                                            >
-                                                <div className="w-5 h-5 rounded-full bg-secondary/80 flex items-center justify-center mr-2 group-hover/add:bg-primary/10 group-hover/add:text-primary transition-colors">
-                                                    <Plus className="h-3 w-3" />
-                                                </div>
-                                                <span>New Board</span>
-                                            </Button>
-                                        )}
-                                    </div>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
+                            <div className="hidden sm:block h-5 w-px bg-border/40 mx-0.5" />
+                            <SharePopover boardId={activeBoard.id}>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all shrink-0"
+                                >
+                                    <Share2 className="w-4 h-4" />
+                                </Button>
+                            </SharePopover>
                         </>
                     )}
                 </div>
             </div>
 
-            <div className="flex items-center gap-4">
+            {/* Right side actions */}
+            <div className="flex items-center gap-2 sm:gap-3">
                 <ThemeToggle />
                 <Popover>
                     <PopoverTrigger asChild>
-                        <Avatar className="h-9 w-9 cursor-pointer border-2 border-transparent hover:border-primary/20 hover:scale-105 transition-all shadow-sm ring-1 ring-border/50">
+                        <Avatar className="h-8 w-8 sm:h-9 sm:w-9 cursor-pointer border-2 border-transparent hover:border-primary/20 hover:scale-105 transition-all shadow-sm ring-1 ring-border/50">
                             <AvatarImage src={user.picture} alt={user.name} />
-                            <AvatarFallback className="bg-primary/10 text-primary font-bold">{user.name.charAt(0)}</AvatarFallback>
+                            <AvatarFallback className="bg-primary/10 text-primary font-bold text-sm">{user.name.charAt(0)}</AvatarFallback>
                         </Avatar>
                     </PopoverTrigger>
-                    <PopoverContent className="w-64 p-2 mr-4 rounded-2xl border-border/50 shadow-2xl backdrop-blur-2xl bg-card/90" align="end">
+                    <PopoverContent className="w-64 p-2 mr-2 sm:mr-4 rounded-2xl border-border/50 shadow-2xl backdrop-blur-2xl bg-card/90" align="end">
                         <div className="px-3 py-3 border-b border-border/40 mb-2 flex items-center gap-3">
                             <Avatar className="h-10 w-10 border border-border/50">
                                 <AvatarImage src={user.picture} alt={user.name} />
                                 <AvatarFallback className="bg-primary/10 text-primary font-bold">{user.name.charAt(0)}</AvatarFallback>
                             </Avatar>
-                            <div className="space-y-0.5">
-                                <div className="text-sm font-bold text-foreground leading-none">{user.name}</div>
-                                <div className="text-[11px] font-medium text-muted-foreground truncate max-w-[140px]">{user.email}</div>
+                            <div className="space-y-0.5 min-w-0">
+                                <div className="text-sm font-bold text-foreground leading-none truncate">{user.name}</div>
+                                <div className="text-[11px] font-medium text-muted-foreground truncate">{user.email}</div>
                             </div>
                         </div>
 
@@ -214,6 +312,6 @@ export default function BoardHeader({ user, onLogout, boards = [], activeBoard, 
                     </PopoverContent>
                 </Popover>
             </div>
-        </header >
+        </header>
     );
 }
