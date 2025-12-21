@@ -126,7 +126,7 @@ export default function List({ list, onAddCard, onDeleteList, onUpdateList, onDe
                         </span>
                         <Popover>
                             <PopoverTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full opacity-0 group-hover/list:opacity-100 transition-all hover:bg-primary/10 hover:text-primary">
+                                <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full opacity-100 md:opacity-0 md:group-hover/list:opacity-100 transition-all hover:bg-primary/10 hover:text-primary">
                                     <MoreHorizontal className="h-4 w-4" />
                                 </Button>
                             </PopoverTrigger>
