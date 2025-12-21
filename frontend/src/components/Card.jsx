@@ -114,7 +114,7 @@ export default function Card({ card, onDelete, onUpdate, onRemoveTag }) {
                         <span className="flex-1">{card.text}</span>
                     </div>
 
-                    <div className="absolute top-2 right-2 opacity-0 group-hover/card:opacity-100 transition-all transform translate-x-2 group-hover/card:translate-x-0 z-10">
+                    <div className="absolute top-2 right-2 opacity-100 md:opacity-0 md:group-hover/card:opacity-100 transition-all transform translate-x-0 md:translate-x-2 md:group-hover/card:translate-x-0 z-10">
                         <Popover>
                             <PopoverTrigger asChild>
                                 <Button

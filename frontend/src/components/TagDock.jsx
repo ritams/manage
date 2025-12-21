@@ -94,53 +94,64 @@ export default function TagDock({ tags, onCreateTag, onDeleteTag }) {
                             <Settings2 className="h-4 w-4" />
                         </Button>
                     </DialogTrigger>
-                    <DialogContent className="rounded-3xl border-border/40 bg-card/90 backdrop-blur-xl text-foreground">
+                    <DialogContent className="rounded-3xl border-border/40 bg-card/95 backdrop-blur-xl text-foreground w-[95vw] max-w-sm p-6">
                         <DialogHeader>
-                            <DialogTitle>Manage Tags</DialogTitle>
+                            <DialogTitle className="text-xl font-bold font-heading">Manage Tags</DialogTitle>
                         </DialogHeader>
 
-                        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-                            <div className="flex gap-2">
-                                <Input
-                                    placeholder="New tag name..."
-                                    value={newName}
-                                    onChange={(e) => setNewName(e.target.value)}
-                                    className="bg-secondary/50 border-border/40 rounded-xl"
-                                />
-                                <div className="flex gap-1 items-center px-2 bg-secondary/50 rounded-xl border border-border/40">
+                        <div className="space-y-6 mt-2">
+                            {/* Existing Tags List - Minimal & Fluid */}
+                            <div className="flex flex-wrap gap-2 max-h-[30vh] overflow-y-auto pr-1 no-scrollbar p-1">
+                                {tags.length === 0 ? (
+                                    <div className="w-full text-center py-4 text-muted-foreground italic text-sm">No tags yet.</div>
+                                ) : (
+                                    tags.map(tag => (
+                                        <div
+                                            key={tag.id}
+                                            className="group flex items-center gap-1 pl-3 pr-1 py-1 rounded-full border shadow-sm transition-all hover:pr-2"
+                                            style={{ backgroundColor: `${tag.color}20`, borderColor: `${tag.color}40` }}
+                                        >
+                                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: tag.color }} />
+                                            <span className="text-xs font-bold mr-1" style={{ color: tag.color }}>{tag.name}</span>
+                                            <button
+                                                className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all"
+                                                onClick={() => onDeleteTag(tag.id)}
+                                            >
+                                                <X className="w-3 h-3" />
+                                            </button>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+
+                            <div className="h-px bg-border/20" />
+
+                            {/* Minimal Creator */}
+                            <form onSubmit={handleSubmit} className="space-y-4">
+                                <div className="flex gap-2">
+                                    <Input
+                                        placeholder="New tag..."
+                                        value={newName}
+                                        onChange={(e) => setNewName(e.target.value)}
+                                        className="bg-secondary/30 border-border/20 rounded-xl h-10 text-sm font-medium px-4 focus-visible:ring-1 focus-visible:ring-primary/30"
+                                    />
+                                    <Button type="submit" size="icon" className="shrink-0 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/20 h-10 w-10" disabled={!newName.trim()}>
+                                        <Plus className="h-5 w-5" />
+                                    </Button>
+                                </div>
+
+                                <div className="flex justify-between items-center px-1">
                                     {colors.map(c => (
                                         <button
                                             key={c}
                                             type="button"
-                                            className={`w-6 h-6 rounded-full border-2 transition-all ${newColor === c ? 'border-primary scale-110' : 'border-transparent opacity-50 hover:opacity-100'}`}
+                                            className={`w-6 h-6 rounded-full transition-all duration-300 ${newColor === c ? 'scale-125 ring-2 ring-offset-2 ring-primary ring-offset-card' : 'hover:scale-110 opacity-60 hover:opacity-100'}`}
                                             style={{ backgroundColor: c }}
                                             onClick={() => setNewColor(c)}
                                         />
                                     ))}
                                 </div>
-                                <Button type="submit" size="icon" className="shrink-0 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90">
-                                    <Plus className="h-4 w-4" />
-                                </Button>
-                            </div>
-                        </form>
-
-                        <div className="mt-6 space-y-2 max-h-[40vh] overflow-y-auto pr-2 no-scrollbar">
-                            {tags.map(tag => (
-                                <div key={tag.id} className="flex items-center justify-between p-3 bg-secondary/30 rounded-2xl border border-border/20 group">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: tag.color }} />
-                                        <span className="font-semibold text-sm tracking-tight">{tag.name}</span>
-                                    </div>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
-                                        onClick={() => onDeleteTag(tag.id)}
-                                    >
-                                        <Trash2 className="h-3.5 w-3.5" />
-                                    </Button>
-                                </div>
-                            ))}
+                            </form>
                         </div>
                     </DialogContent>
                 </Dialog>
