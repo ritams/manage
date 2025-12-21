@@ -62,7 +62,7 @@ export default function List({ list, onAddCard, onDeleteList, onUpdateList, onDe
 
     if (isOverlay) {
         return (
-            <div className="w-80 shrink-0 flex flex-col opacity-90 scale-105 rotate-3 cursor-grabbing z-50">
+            <div className="w-[85vw] md:w-80 shrink-0 flex flex-col opacity-90 scale-105 rotate-3 cursor-grabbing z-50">
                 <div className="bg-card/60 backdrop-blur-3xl border-2 border-primary/40 p-4 rounded-[2rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] flex flex-col gap-4">
                     <div className="flex justify-between items-center px-2">
                         <div className="text-base font-bold font-heading text-foreground truncate">{list.title}</div>
@@ -82,7 +82,7 @@ export default function List({ list, onAddCard, onDeleteList, onUpdateList, onDe
         <div
             ref={setNodeRef}
             style={style}
-            className={`w-80 shrink-0 flex flex-col transition-all duration-300 ${isDragging ? "opacity-20 scale-95" : "opacity-100"}`}
+            className={`w-[85vw] md:w-80 shrink-0 flex flex-col transition-all duration-300 snap-center ${isDragging ? "opacity-20 scale-95" : "opacity-100"}`}
         >
             <div
                 className="bg-card/30 backdrop-blur-2xl border border-border/40 p-4 rounded-[2rem] shadow-xl shadow-black/5 flex flex-col gap-4 group/list transition-all hover:bg-card/50 hover:border-primary/20 hover:shadow-2xl hover:shadow-primary/5"

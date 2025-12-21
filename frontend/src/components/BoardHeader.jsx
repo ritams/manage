@@ -55,15 +55,16 @@ export default function BoardHeader({ user, onLogout, boards = [], activeBoard, 
     };
 
     return (
-        <header className="border-b border-border/40 p-4 flex justify-between items-center bg-background/60 backdrop-blur-xl sticky top-0 z-50 px-6 sm:px-8 transition-all duration-300">
+        <header className="border-b border-border/40 p-4 flex justify-between items-center bg-background/60 backdrop-blur-xl sticky top-0 z-50 px-4 sm:px-8 transition-all duration-300">
             <div className="flex items-center gap-4">
-                <span className="font-heading font-black text-3xl tracking-tighter text-primary">cardio</span>
+                <span className="hidden md:inline font-heading font-black text-3xl tracking-tighter text-primary">cardio</span>
+                <span className="inline md:hidden font-heading font-black text-3xl tracking-tighter text-primary">C</span>
 
                 <div className="h-8 w-px bg-border/40" />
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 md:gap-3">
                     {/* Inline Board Name Edit */}
-                    <div className="group/board-title">
+                    <div className="group/board-title max-w-[120px] sm:max-w-xs md:max-w-md">
                         {isEditing ? (
                             <Input
                                 value={editName}
@@ -71,17 +72,17 @@ export default function BoardHeader({ user, onLogout, boards = [], activeBoard, 
                                 onBlur={handleRename}
                                 onKeyDown={(e) => e.key === 'Enter' && handleRename()}
                                 autoFocus
-                                className="h-9 w-64 text-xl font-medium px-2 bg-background/50 border-primary/30 focus-visible:ring-primary/20 rounded-lg"
+                                className="h-9 w-full text-lg md:text-xl font-medium px-2 bg-background/50 border-primary/30 focus-visible:ring-primary/20 rounded-lg"
                             />
                         ) : (
                             <div
-                                className="text-xl font-medium font-heading text-foreground/90 cursor-pointer py-1 transition-colors flex items-center gap-2 hover:text-primary"
+                                className="text-lg md:text-xl font-medium font-heading text-foreground/90 cursor-pointer py-1 transition-colors flex items-center gap-2 hover:text-primary truncate"
                                 onClick={() => {
                                     setEditName(activeBoard?.name || "");
                                     setIsEditing(true);
                                 }}
                             >
-                                {activeBoard?.name || 'Untitled Board'}
+                                <span className="truncate">{activeBoard?.name || 'Untitled Board'}</span>
                             </div>
                         )}
                     </div>
@@ -91,7 +92,7 @@ export default function BoardHeader({ user, onLogout, boards = [], activeBoard, 
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all"
+                                className="h-8 w-8 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all shrink-0"
                             >
                                 <Share2 className="w-4 h-4" />
                             </Button>
@@ -100,14 +101,14 @@ export default function BoardHeader({ user, onLogout, boards = [], activeBoard, 
 
                     {!isEditing && (
                         <>
-                            <div className="h-5 w-px bg-border/60 mx-1" />
+                            <div className="hidden sm:block h-5 w-px bg-border/60 mx-1" />
 
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button
                                         variant="ghost"
                                         size="icon"
-                                        className="h-8 w-8 rounded-full bg-secondary/50 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all"
+                                        className="h-8 w-8 rounded-full bg-secondary/50 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all shrink-0"
                                     >
                                         <Plus className="w-4 h-4" />
                                     </Button>

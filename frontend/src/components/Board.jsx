@@ -116,7 +116,7 @@ export default function Board({ user, onLogout }) {
             >
                 <div className="flex-1 overflow-x-auto overflow-y-auto p-6 sm:p-10">
                     <SortableContext items={lists.map(l => formatListId(l.id))} strategy={horizontalListSortingStrategy}>
-                        <div className="flex gap-8 items-start pb-10">
+                        <div className="flex gap-4 sm:gap-8 items-start pb-10 snap-x snap-mandatory h-full">
                             {lists.map((list) => (
                                 <List
                                     key={list.id}
