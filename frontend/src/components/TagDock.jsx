@@ -26,10 +26,9 @@ function DraggableTag({ tag }) {
     return (
         <div ref={setNodeRef} style={style} {...listeners} {...attributes} className="cursor-grab active:cursor-grabbing">
             <div
-                className="flex items-center gap-1.5 pl-2.5 pr-2.5 py-1 rounded-full border shadow-sm transition-all hover:scale-105"
+                className="flex items-center px-3 py-1 rounded-full border shadow-sm transition-all hover:scale-105"
                 style={{ backgroundColor: `${tag.color}20`, borderColor: `${tag.color}40` }}
             >
-                <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: tag.color }} />
                 <span className="text-xs font-bold whitespace-nowrap" style={{ color: tag.color }}>{tag.name}</span>
             </div>
         </div>
@@ -112,10 +111,9 @@ export default function TagDock({ tags, onCreateTag, onDeleteTag }) {
                                     tags.map(tag => (
                                         <div
                                             key={tag.id}
-                                            className="group flex items-center gap-1 pl-3 pr-1 py-1 rounded-full border shadow-sm transition-all hover:pr-2"
+                                            className="group flex items-center pl-3 pr-1 py-1 rounded-full border shadow-sm transition-all hover:pr-2"
                                             style={{ backgroundColor: `${tag.color}20`, borderColor: `${tag.color}40` }}
                                         >
-                                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: tag.color }} />
                                             <span className="text-xs font-bold mr-1" style={{ color: tag.color }}>{tag.name}</span>
                                             <button
                                                 className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all"

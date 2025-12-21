@@ -96,10 +96,9 @@ export default function Card({ card, onDelete, onUpdate, onRemoveTag }) {
                                         onClick={(e) => e.stopPropagation()}
                                     >
                                         <div
-                                            className="flex items-center gap-1.5 pl-2 pr-2 py-0.5 rounded-full border shadow-sm transition-all"
+                                            className="flex items-center px-2.5 py-0.5 rounded-full border shadow-sm transition-all"
                                             style={{ backgroundColor: `${tag.color}20`, borderColor: `${tag.color}40` }}
                                         >
-                                            <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: tag.color }} />
                                             <span className="text-[10px] font-bold" style={{ color: tag.color }}>{tag.name}</span>
                                         </div>
                                         <button
