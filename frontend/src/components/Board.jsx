@@ -131,7 +131,7 @@ export default function Board({ user, onLogout }) {
             >
                 <div
                     {...bind()}
-                    className="flex-1 overflow-x-auto overflow-y-auto p-6 sm:p-10 touch-pan-x touch-pan-y"
+                    className="flex-1 overflow-x-auto overflow-y-auto px-6 pt-6 pb-24 sm:px-10 sm:pt-10 sm:pb-28 touch-pan-x touch-pan-y"
                 >
                     <SortableContext items={lists.map(l => formatListId(l.id))} strategy={horizontalListSortingStrategy}>
                         <div
