@@ -103,6 +103,39 @@ export default function Card({ card, onDelete, onUpdate, onRemoveTag, onSetDueDa
         }
     };
 
+    const renderTextWithLinks = (text) => {
+        if (!text) return null;
+        // Regex matches:
+        // 1. http:// or https:// followed by non-whitespace
+        // 2. www. followed by non-whitespace
+        // 3. specific domain patterns like google.com (alphanumeric + dots + 2+ char extension)
+        const urlPattern = /((?:https?:\/\/|www\.)[^\s]+|[a-zA-Z0-9][a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\/[^\s]*)?)/g;
+        const parts = text.split(urlPattern);
+
+        return parts.map((part, index) => {
+            if (part.match(urlPattern)) {
+                let href = part;
+                if (!part.startsWith('http://') && !part.startsWith('https://')) {
+                    href = `https://${part}`;
+                }
+
+                return (
+                    <a
+                        key={index}
+                        href={href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary underline decoration-primary/30 hover:decoration-primary break-all relative z-50 hover:text-primary/80 transition-colors"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {part}
+                    </a>
+                );
+            }
+            return part;
+        });
+    };
+
     if (isEditing) {
         return (
             <div ref={setNodeRef} style={style} className="relative z-20 group/card">
@@ -163,7 +196,7 @@ export default function Card({ card, onDelete, onUpdate, onRemoveTag, onSetDueDa
                                 ))}
                             </div>
                         )}
-                        <span className="flex-1">{card.text}</span>
+                        <span className="flex-1">{renderTextWithLinks(card.text)}</span>
 
                         {/* Due Date Badge */}
                         {card.due_date && (
