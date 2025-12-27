@@ -2,10 +2,11 @@ import { useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { motion, AnimatePresence } from "framer-motion";
 import Card from "./Card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, MoreHorizontal, Trash, X, Sparkles } from "lucide-react";
+import { Plus, MoreHorizontal, Trash, Sparkles } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
     AlertDialog,
@@ -62,8 +63,8 @@ export default function List({ list, onAddCard, onDeleteList, onUpdateList, onDe
 
     if (isOverlay) {
         return (
-            <div className="w-[85vw] md:w-80 shrink-0 flex flex-col opacity-90 scale-105 rotate-3 cursor-grabbing z-50">
-                <div className="bg-card/60 backdrop-blur-3xl border-2 border-primary/40 p-4 rounded-[2rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] flex flex-col gap-4">
+            <div className="w-[85vw] md:w-80 shrink-0 flex flex-col opacity-95 scale-105 rotate-3 cursor-grabbing z-50">
+                <div className="bg-card/80 backdrop-blur-3xl border-2 border-primary/40 p-4 rounded-[2rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] flex flex-col gap-4">
                     <div className="flex justify-between items-center px-2">
                         <div className="text-base font-bold font-heading text-foreground truncate">{list.title}</div>
                         <span className="text-[10px] font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-full border border-primary/20">{list.cards.length}</span>
@@ -82,16 +83,15 @@ export default function List({ list, onAddCard, onDeleteList, onUpdateList, onDe
         <div
             ref={setNodeRef}
             style={style}
-            className={`w-[85vw] md:w-80 shrink-0 flex flex-col transition-all duration-300 snap-center ${isDragging ? "opacity-20 scale-95" : "opacity-100"}`}
+            className={`w-[85vw] md:w-80 shrink-0 flex flex-col transition-all duration-300 snap-center ${isDragging ? "opacity-30 scale-95" : "opacity-100"}`}
         >
-            <div
-                className="bg-card/30 backdrop-blur-2xl border border-border/40 p-4 rounded-[2rem] shadow-xl shadow-black/5 flex flex-col gap-4 group/list transition-all hover:bg-card/50 hover:border-primary/20 hover:shadow-2xl hover:shadow-primary/5"
+            <motion.div
+                className="bg-card/40 backdrop-blur-2xl border border-border/40 p-3 sm:p-4 rounded-[1.5rem] sm:rounded-[2rem] shadow-xl shadow-black/5 flex flex-col gap-3 sm:gap-4 group/list transition-all hover:bg-card/60 hover:border-primary/20 hover:shadow-2xl hover:shadow-primary/5"
+                whileHover={{ y: -2 }}
+                transition={{ duration: 0.2 }}
             >
-
                 {/* List Header */}
-                <div
-                    className="flex justify-between items-center px-1 group/header relative"
-                >
+                <div className="flex justify-between items-center px-1 group/header relative">
                     <div
                         ref={setActivatorNodeRef}
                         {...attributes}
@@ -101,36 +101,48 @@ export default function List({ list, onAddCard, onDeleteList, onUpdateList, onDe
 
                     <div className="flex-1 z-10 mr-2">
                         {isEditingTitle ? (
-                            <Input
-                                value={title}
-                                onChange={(e) => setTitle(e.target.value)}
-                                onBlur={handleTitleUpdate}
-                                onKeyDown={(e) => e.key === 'Enter' && handleTitleUpdate()}
-                                autoFocus
-                                onPointerDown={(e) => e.stopPropagation()}
-                                className="h-8 text-sm font-bold px-2 bg-background/50 border-primary/30 focus-visible:ring-primary/20 rounded-lg"
-                            />
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                            >
+                                <Input
+                                    value={title}
+                                    onChange={(e) => setTitle(e.target.value)}
+                                    onBlur={handleTitleUpdate}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleTitleUpdate()}
+                                    autoFocus
+                                    onPointerDown={(e) => e.stopPropagation()}
+                                    className="h-8 text-sm font-bold px-2 bg-background/50 border-primary/30 focus-visible:ring-primary/20 rounded-lg"
+                                />
+                            </motion.div>
                         ) : (
-                            <div
+                            <motion.div
                                 className="text-sm font-extrabold font-heading text-foreground/90 cursor-pointer py-1 truncate flex items-center gap-2 group-hover/list:text-primary transition-colors"
                                 onClick={() => setIsEditingTitle(true)}
+                                whileHover={{ x: 2 }}
                             >
                                 {list.title}
-                            </div>
+                            </motion.div>
                         )}
                     </div>
 
                     <div className="flex items-center gap-2 z-10">
-                        <span className="text-[10px] font-bold text-muted-foreground bg-secondary/80 px-2 py-0.5 rounded-full border border-border/50">
+                        <motion.span
+                            className="text-[10px] font-bold text-muted-foreground bg-secondary/80 px-2 py-0.5 rounded-full border border-border/50"
+                            key={list.cards.length}
+                            initial={{ scale: 1.2 }}
+                            animate={{ scale: 1 }}
+                            transition={{ type: "spring", stiffness: 300 }}
+                        >
                             {list.cards.length}
-                        </span>
+                        </motion.span>
                         <Popover>
                             <PopoverTrigger asChild>
                                 <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full opacity-100 md:opacity-0 md:group-hover/list:opacity-100 transition-all hover:bg-primary/10 hover:text-primary">
                                     <MoreHorizontal className="h-4 w-4" />
                                 </Button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-48 p-1 rounded-xl border-border/50 shadow-xl backdrop-blur-xl bg-card/90" align="start">
+                            <PopoverContent className="w-48 p-1 rounded-xl border-border/50 shadow-xl backdrop-blur-xl bg-card/95" align="start">
                                 <AlertDialog>
                                     <AlertDialogTrigger asChild>
                                         <Button
@@ -162,26 +174,50 @@ export default function List({ list, onAddCard, onDeleteList, onUpdateList, onDe
                 </div>
 
                 {/* Cards Container */}
-                <div className="pr-1 space-y-3 py-1">
+                <div className="pr-1 space-y-2 sm:space-y-3 py-1">
                     <SortableContext items={list.cards.map(c => `card-${c.id}`)} strategy={verticalListSortingStrategy}>
-                        {list.cards.map((card) => (
-                            <Card
-                                key={card.id}
-                                card={card}
-                                onDelete={() => onDeleteCard(card.id)}
-                                onUpdate={(text) => onUpdateCard(card.id, text)}
-                                onRemoveTag={onRemoveTag}
-                                onSetDueDate={onSetDueDate}
-                            />
-                        ))}
+                        <AnimatePresence mode="popLayout">
+                            {list.cards.map((card, index) => (
+                                <motion.div
+                                    key={card.id}
+                                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.9, y: -10 }}
+                                    transition={{
+                                        delay: index * 0.02,
+                                        duration: 0.2,
+                                        type: "spring",
+                                        stiffness: 400,
+                                        damping: 25
+                                    }}
+                                    layout
+                                >
+                                    <Card
+                                        card={card}
+                                        onDelete={() => onDeleteCard(card.id)}
+                                        onUpdate={(text) => onUpdateCard(card.id, text)}
+                                        onRemoveTag={onRemoveTag}
+                                        onSetDueDate={onSetDueDate}
+                                    />
+                                </motion.div>
+                            ))}
+                        </AnimatePresence>
                     </SortableContext>
                 </div>
 
                 {/* Add Card Footer */}
-                <div className="pt-2">
-                    {
-                        isAddingCard ? (
-                            <form onSubmit={handleAddCard} className="animate-in fade-in slide-in-from-top-2 duration-300 space-y-3 p-1">
+                <div className="pt-1 sm:pt-2">
+                    <AnimatePresence mode="wait">
+                        {isAddingCard ? (
+                            <motion.form
+                                key="form"
+                                onSubmit={handleAddCard}
+                                className="space-y-3 p-1"
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: "auto" }}
+                                exit={{ opacity: 0, height: 0 }}
+                                transition={{ duration: 0.2 }}
+                            >
                                 <Input
                                     autoFocus
                                     placeholder="Task description..."
@@ -194,26 +230,40 @@ export default function List({ list, onAddCard, onDeleteList, onUpdateList, onDe
                                         <Button type="submit" size="sm" className="h-8 text-xs bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 px-4 font-bold rounded-lg">Add Task</Button>
                                         <Button type="button" variant="ghost" size="sm" className="h-8 px-3 text-xs font-bold rounded-lg" onClick={() => setIsAddingCard(false)}>Cancel</Button>
                                     </div>
-                                    <Sparkles className="w-4 h-4 text-primary/40" />
+                                    <motion.div
+                                        animate={{ rotate: [0, 360] }}
+                                        transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+                                    >
+                                        <Sparkles className="w-4 h-4 text-primary/40" />
+                                    </motion.div>
                                 </div>
-                            </form>
+                            </motion.form>
                         ) : (
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                className="w-full justify-start text-muted-foreground hover:text-primary hover:bg-primary/5 h-10 text-xs font-bold rounded-xl border border-transparent hover:border-primary/10 transition-all group/add"
-                                onClick={() => setIsAddingCard(true)}
+                            <motion.div
+                                key="button"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
                             >
-                                <div className="w-6 h-6 rounded-full bg-secondary/80 flex items-center justify-center mr-2 group-hover/add:bg-primary/10 group-hover/add:text-primary transition-colors">
-                                    <Plus className="h-3.5 w-3.5" />
-                                </div>
-                                <span>New Task</span>
-                            </Button>
-                        )
-                    }
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="w-full justify-start text-muted-foreground hover:text-primary hover:bg-primary/5 h-10 text-xs font-bold rounded-xl border border-transparent hover:border-primary/10 transition-all group/add"
+                                    onClick={() => setIsAddingCard(true)}
+                                >
+                                    <motion.div
+                                        className="w-6 h-6 rounded-full bg-secondary/80 flex items-center justify-center mr-2 group-hover/add:bg-primary/10 group-hover/add:text-primary transition-colors"
+                                        whileHover={{ scale: 1.1 }}
+                                    >
+                                        <Plus className="h-3.5 w-3.5" />
+                                    </motion.div>
+                                    <span>New Task</span>
+                                </Button>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
-            </div >
-        </div >
+            </motion.div>
+        </div>
     );
 }
-
